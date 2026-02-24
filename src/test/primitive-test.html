@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A2 — Motion Primitive Test Harness</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+        #canvas-container { position: fixed; inset: 0; z-index: 0; }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* ── CONTROL PANEL ────────────────────────────────────── */
+        #controls {
+            position: fixed; top: 16px; right: 16px; z-index: 10;
+            width: 320px;
+            background: rgba(10, 10, 20, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            max-height: calc(100vh - 32px);
+            overflow-y: auto;
+        }
+        #controls h1 {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #8080ff;
+            margin-bottom: 16px;
+        }
+        #controls label {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            margin-top: 12px;
+            margin-bottom: 4px;
+        }
+        #controls select, #controls input[type="range"] {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #e0e0e0;
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+        #controls input[type="range"] {
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(128, 128, 255, 0.2);
+            padding: 0;
+        }
+        #controls input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: #8080ff;
+            cursor: pointer;
+        }
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .slider-row input { flex: 1; }
+        .slider-val {
+            font-size: 11px;
+            color: #666;
+            min-width: 40px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        #fps {
+            position: fixed; top: 16px; left: 16px; z-index: 10;
+            font-size: 13px; color: #4f4; font-family: monospace;
+        }
+        #info {
+            position: fixed; bottom: 16px; left: 16px; z-index: 10;
+            font-size: 12px; color: #666;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            margin: 16px 0;
+        }
+        .toggle-row {
+            display: flex; align-items: center; gap: 8px;
+            margin-top: 8px;
+        }
+        .toggle-row input[type="checkbox"] {
+            accent-color: #8080ff;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="fps">-- FPS</div>
+    <div id="info">A2 Motion Primitive Test Harness — Click to toggle rotation</div>
+
+    <div id="controls">
+        <h1>🎯 Motion Primitives</h1>
+
+        <label>Primitive</label>
+        <select id="primitive-select">
+            <option value="-1">(none — spring only)</option>
+            <option value="0">0: oscillate_bend</option>
+            <option value="1" selected>1: oscillate_translate</option>
+            <option value="2">2: arc_translate</option>
+            <option value="3">3: rigid_rotate</option>
+            <option value="4">4: spring_settle</option>
+            <option value="5">5: radial_burst</option>
+            <option value="6">6: radial_contract</option>
+            <option value="7">7: spiral</option>
+            <option value="8">8: laminar_flow</option>
+            <option value="9">9: curl_noise_flow</option>
+            <option value="10">10: brownian_scatter</option>
+            <option value="11">11: wave_propagate</option>
+            <option value="12">12: stretch_along_axis</option>
+            <option value="13">13: twist</option>
+            <option value="14">14: pendulum</option>
+        </select>
+
+        <hr>
+
+        <label>Amplitude</label>
+        <div class="slider-row">
+            <input type="range" id="amplitude" min="0" max="3" step="0.01" value="0.5">
+            <span class="slider-val" id="amplitude-val">0.50</span>
+        </div>
+
+        <label>Frequency (Hz)</label>
+        <div class="slider-row">
+            <input type="range" id="frequency" min="0.1" max="5" step="0.1" value="1.0">
+            <span class="slider-val" id="frequency-val">1.0</span>
+        </div>
+
+        <label>Speed</label>
+        <div class="slider-row">
+            <input type="range" id="speed" min="0.1" max="3" step="0.1" value="1.0">
+            <span class="slider-val" id="speed-val">1.0</span>
+        </div>
+
+        <label>Duration (one-shots only, sec)</label>
+        <div class="slider-row">
+            <input type="range" id="duration" min="0.5" max="5" step="0.1" value="2.0">
+            <span class="slider-val" id="duration-val">2.0</span>
+        </div>
+
+        <hr>
+
+        <label>Part to Animate (0 = whole body)</label>
+        <div class="slider-row">
+            <input type="range" id="part-id" min="0" max="5" step="1" value="0">
+            <span class="slider-val" id="part-id-val">0</span>
+        </div>
+
+        <div class="toggle-row">
+            <input type="checkbox" id="audio-mod"> <label for="audio-mod" style="margin:0">Mock Audio Modulation</label>
+        </div>
+
+        <div class="toggle-row">
+            <input type="checkbox" id="show-parts" checked> <label for="show-parts" style="margin:0">Color by Part ID</label>
+        </div>
+
+        <hr>
+        <button id="restart-btn" style="width:100%;padding:8px;background:rgba(128,128,255,0.2);border:1px solid rgba(128,128,255,0.3);border-radius:6px;color:#8080ff;cursor:pointer;">
+            ↻ Restart Animation
+        </button>
+    </div>
+
+    <!-- Three.js from CDN -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+            "three/examples/jsm/misc/GPUComputationRenderer.js": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/misc/GPUComputationRenderer.js"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GPUComputationRenderer } from 'three/examples/jsm/misc/GPUComputationRenderer.js';
+
+        // ── CONFIGURATION ─────────────────────────────────────────
+        const SIZE = 64;            // 64×64 = 4096 particles
+        const PARTICLE_COUNT = SIZE * SIZE;
+        const NUM_PARTS = 6;        // Mock parts: body, head, leg_fl, leg_fr, leg_bl, leg_br
+
+        // ── SHADER SOURCES (inlined for standalone use) ──────────
+
+        // Simplex noise (same as velocity.frag.glsl)
+        const NOISE_GLSL = `
+vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
+
+float snoise(vec3 v){
+    const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+    const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+    vec3 i = floor(v + dot(v, C.yyy));
+    vec3 x0 = v - i + dot(i, C.xxx);
+    vec3 g = step(x0.yzx, x0.xyz);
+    vec3 l = 1.0 - g;
+    vec3 i1 = min(g.xyz, l.zxy);
+    vec3 i2 = max(g.xyz, l.zxy);
+    vec3 x1 = x0 - i1 + C.xxx;
+    vec3 x2 = x0 - i2 + 2.0 * C.xxx;
+    vec3 x3 = x0 - 1.0 + 3.0 * C.xxx;
+    i = mod(i, 289.0);
+    vec4 p = permute(permute(permute(
+        i.z + vec4(0.0, i1.z, i2.z, 1.0))
+        + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+        + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+    float n_ = 1.0/7.0;
+    vec3 ns = n_ * D.wyz - D.xzx;
+    vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+    vec4 x_ = floor(j * ns.z);
+    vec4 y_ = floor(j - 7.0 * x_);
+    vec4 x = x_ * ns.x + ns.yyyy;
+    vec4 y = y_ * ns.x + ns.yyyy;
+    vec4 h = 1.0 - abs(x) - abs(y);
+    vec4 b0 = vec4(x.xy, y.xy);
+    vec4 b1 = vec4(x.zw, y.zw);
+    vec4 s0 = floor(b0)*2.0 + 1.0;
+    vec4 s1 = floor(b1)*2.0 + 1.0;
+    vec4 sh = -step(h, vec4(0.0));
+    vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+    vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+    vec3 p0 = vec3(a0.xy,h.x);
+    vec3 p1 = vec3(a0.zw,h.y);
+    vec3 p2 = vec3(a1.xy,h.z);
+    vec3 p3 = vec3(a1.zw,h.w);
+    vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+    p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+    m = m * m;
+    return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+}
+
+vec3 snoiseVec3(vec3 x){
+    float s  = snoise(vec3(x));
+    float s1 = snoise(vec3(x.y - 19.1, x.z + 33.4, x.x + 47.2));
+    float s2 = snoise(vec3(x.z + 74.2, x.x - 124.5, x.y + 99.4));
+    return vec3(s, s1, s2);
+}
+
+vec3 curlNoise(vec3 p){
+    const float e = 0.001;
+    vec3 dx = vec3(e, 0.0, 0.0);
+    vec3 dy = vec3(0.0, e, 0.0);
+    vec3 dz = vec3(0.0, 0.0, e);
+    vec3 p_x0 = snoiseVec3(p - dx);
+    vec3 p_x1 = snoiseVec3(p + dx);
+    vec3 p_y0 = snoiseVec3(p - dy);
+    vec3 p_y1 = snoiseVec3(p + dy);
+    vec3 p_z0 = snoiseVec3(p - dz);
+    vec3 p_z1 = snoiseVec3(p + dz);
+    float x = p_y1.z - p_y0.z - p_z1.y + p_z0.y;
+    float y = p_z1.x - p_z0.x - p_x1.z + p_x0.z;
+    float z = p_x1.y - p_x0.y - p_y1.x + p_y0.x;
+    const float divisor = 1.0 / (2.0 * e);
+    return normalize(vec3(x, y, z) * divisor);
+}
+`;
+
+        // We inline a simplified velocity shader for the test harness
+        // that includes the motion plan path but strips audio/sentiment
+        const VELOCITY_FRAG = `
+uniform float uTime;
+uniform float uDelta;
+uniform sampler2D tMorphTarget;
+uniform float uSpringK;
+uniform float uDrag;
+
+// Motion plan uniforms
+uniform sampler2D tPartAttr;
+uniform sampler2D tMotionPlan;
+uniform sampler2D tMotionPlanB;
+uniform float uMotionPlanActive;
+uniform float uMotionSpeedScale;
+uniform float uMotionAmplitudeScale;
+uniform float uBlendFactor;
+uniform float uPitchDeviation;
+uniform float uPitchConfidence;
+uniform float uEmotionArousal;
+uniform float uEmotionValence;
+
+${NOISE_GLSL}
+
+// ══ INLINE PRIMITIVES + MOTION PLAN ══
+// (In production these are prepended by buildMotionPlanShader;
+//  here we inline them for standalone testing)
+` +
+        // We'll fetch these files from disk... but since this is standalone HTML,
+        // we inline the essential primitives inline. For brevity, we include
+        // the full source via template.
+`
+#define PI 3.14159265359
+#define TWO_PI 6.28318530718
+
+// ── MODIFIERS ──
+float ease_in_out(float t, float exponent) {
+    float tClamped = clamp(t, 0.0, 1.0);
+    float easeIn = pow(tClamped, exponent);
+    float easeOut = 1.0 - pow(1.0 - tClamped, exponent);
+    return mix(easeIn, easeOut, tClamped);
+}
+vec3 apply_overshoot(vec3 displacement, float amount, float settle, float t) {
+    float overshoot = 1.0 + amount * sin(t * PI) * exp(-settle * t);
+    return displacement * overshoot;
+}
+float hash11(float p) {
+    p = fract(p * 0.1031);
+    p *= p + 33.33;
+    p *= p + p;
+    return fract(p);
+}
+vec3 apply_jitter(vec3 displacement, float amplitude, float frequency, float seed) {
+    float jx = hash11(seed * 127.1 + frequency * 311.7) - 0.5;
+    float jy = hash11(seed * 269.5 + frequency * 183.3) - 0.5;
+    float jz = hash11(seed * 419.2 + frequency * 571.1) - 0.5;
+    return displacement + vec3(jx, jy, jz) * amplitude;
+}
+
+// ── ALL 15 PRIMITIVES (same as primitives.glsl) ──
+vec3 prim_oscillate_bend(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2, float p3, float p4, float p5) {
+    vec3 axis = normalize(vec3(p0, p1, p2));
+    float angle = sin(t * p4 * TWO_PI + p5 * TWO_PI) * p3 * attWeight;
+    vec3 toPos = restPos - dot(restPos, axis) * axis;
+    float dist = length(toPos);
+    vec3 perpDir = dist > 0.001 ? normalize(toPos) : vec3(0.0, 1.0, 0.0);
+    vec3 bendDir = cross(axis, perpDir);
+    return bendDir * sin(angle) * dist;
+}
+
+vec3 prim_oscillate_translate(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2, float p3, float p4, float p5) {
+    vec3 dir = normalize(vec3(p0, p1, p2));
+    float disp = sin(t * p4 * TWO_PI + p5 * TWO_PI) * p3 * attWeight;
+    return dir * disp;
+}
+
+vec3 prim_arc_translate(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2, float p3, float p4) {
+    float tc = clamp(t, 0.0, 1.0);
+    vec3 fwd = normalize(vec3(p2, p3, p4));
+    float height = 4.0 * p0 * tc * (1.0 - tc);
+    float forward = p1 * tc;
+    return (fwd * forward + vec3(0.0, height, 0.0)) * attWeight;
+}
+
+vec3 prim_rigid_rotate(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2, float p3, float p4, float p5, float p6, float p7) {
+    vec3 pivot = vec3(p0, p1, p2);
+    vec3 axis = normalize(vec3(p3, p4, p5));
+    float angle = sin(t * p7 * TWO_PI) * p6 * attWeight;
+    vec3 v = restPos - pivot;
+    float cosA = cos(angle);
+    float sinA = sin(angle);
+    vec3 rotated = v * cosA + cross(axis, v) * sinA + axis * dot(axis, v) * (1.0 - cosA);
+    return rotated - v;
+}
+
+vec3 prim_spring_settle(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2, float p3, float p4) {
+    vec3 target = vec3(p0, p1, p2);
+    float tc = clamp(t, 0.0, 1.0);
+    float decay = exp(-p3 * p4 * tc * 5.0);
+    float settle = 1.0 - (1.0 + p3 * tc * 5.0) * decay;
+    return target * settle * attWeight;
+}
+
+vec3 prim_radial_burst(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2, float p3, float p4) {
+    vec3 origin = vec3(p0, p1, p2);
+    vec3 dir = restPos - origin;
+    float dist = length(dir);
+    if (dist < 0.001) dir = vec3(0.0, 1.0, 0.0); else dir = dir / dist;
+    float tc = clamp(t, 0.0, 1.0);
+    float energy = p3 * exp(-p4 * tc * 5.0);
+    return dir * energy * attWeight;
+}
+
+vec3 prim_radial_contract(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2, float p3, float p4) {
+    vec3 center = vec3(p0, p1, p2);
+    vec3 toCenter = center - restPos;
+    float tc = clamp(t, 0.0, 1.0);
+    float strength = p3 * (1.0 - exp(-p4 * tc * 3.0));
+    return toCenter * strength * attWeight;
+}
+
+vec3 prim_spiral(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2, float p3, float p4, float p5, float p6, float p7) {
+    vec3 center = vec3(p0, p1, p2);
+    vec3 axis = normalize(vec3(p3, p4, p5));
+    vec3 v = restPos - center;
+    vec3 radial = v - dot(v, axis) * axis;
+    float angle = t * p6 * attWeight;
+    float cosA = cos(angle);
+    float sinA = sin(angle);
+    vec3 rotated = radial * cosA + cross(axis, radial) * sinA;
+    float radialScale = 1.0 + p7 * sin(t * 0.5) * attWeight;
+    return (rotated * radialScale - radial);
+}
+
+vec3 prim_laminar_flow(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2, float p3) {
+    vec3 dir = normalize(vec3(p0, p1, p2));
+    float progress = fract(t * p3 * 0.1) * 2.0 - 1.0;
+    return dir * progress * attWeight * 3.0;
+}
+
+vec3 prim_curl_noise_flow(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2) {
+    vec3 samplePos = restPos * p0 + t * p1;
+    vec3 curl = curlNoise(samplePos);
+    return curl * p2 * attWeight;
+}
+
+vec3 prim_brownian_scatter(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1) {
+    float tc = clamp(t, 0.0, 1.0);
+    float h1 = hash11(p1 * 127.1 + restPos.x * 311.7);
+    float h2 = hash11(p1 * 269.5 + restPos.y * 183.3);
+    float h3 = hash11(p1 * 419.2 + restPos.z * 571.1);
+    vec3 randomDir = normalize(vec3(h1 - 0.5, h2 - 0.5, h3 - 0.5));
+    return randomDir * p0 * tc * tc * attWeight;
+}
+
+vec3 prim_wave_propagate(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2, float p3, float p4, float p5) {
+    vec3 dir = normalize(vec3(p0, p1, p2));
+    float spatial = dot(restPos, dir);
+    float wave = sin(spatial * TWO_PI / max(p3, 0.01) - t * p5) * p4;
+    vec3 perpDir = vec3(0.0, 1.0, 0.0);
+    if (abs(dot(dir, perpDir)) > 0.99) perpDir = vec3(1.0, 0.0, 0.0);
+    perpDir = normalize(perpDir - dot(perpDir, dir) * dir);
+    return perpDir * wave * attWeight;
+}
+
+vec3 prim_stretch_along_axis(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2, float p3, float p4) {
+    vec3 axis = normalize(vec3(p0, p1, p2));
+    float distAlongAxis = dot(restPos, axis);
+    float scaleMod = sin(t * p4 * TWO_PI) * (p3 - 1.0) * 0.5 + (p3 - 1.0) * 0.5;
+    return axis * distAlongAxis * scaleMod * attWeight;
+}
+
+vec3 prim_twist(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2, float p3, float p4) {
+    vec3 axis = normalize(vec3(p0, p1, p2));
+    float distAlongAxis = dot(restPos, axis);
+    float angle = distAlongAxis * p3 * sin(t * p4 * TWO_PI) * attWeight;
+    vec3 radial = restPos - distAlongAxis * axis;
+    float cosA = cos(angle);
+    float sinA = sin(angle);
+    vec3 rotated = radial * cosA + cross(axis, radial) * sinA;
+    return rotated - radial;
+}
+
+vec3 prim_pendulum(vec3 pos, vec3 restPos, float t, float attWeight,
+    float p0, float p1, float p2, float p3, float p4, float p5) {
+    vec3 pivot = vec3(p0, p1, p2);
+    vec3 arm = restPos - pivot;
+    float armLen = length(arm);
+    if (armLen < 0.001) return vec3(0.0);
+    float omega = sqrt(9.81 / max(p3, 0.01));
+    float theta = p4 * exp(-p5 * t) * cos(omega * t);
+    vec3 swingAxis = vec3(0.0, 0.0, 1.0);
+    float cosT = cos(theta * attWeight);
+    float sinT = sin(theta * attWeight);
+    vec3 rotated = arm * cosT + cross(swingAxis, arm) * sinT
+                 + swingAxis * dot(swingAxis, arm) * (1.0 - cosT);
+    return rotated - arm;
+}
+
+// ── DISPATCH ──
+vec3 dispatchPrimitive(int primId, vec3 pos, vec3 restPos, float t,
+    float attWeight, float p0, float p1, float p2, float p3,
+    float p4, float p5, float p6, float p7, float p8, float p9, float p10, float p11) {
+    vec3 disp = vec3(0.0);
+    if (primId < 4) {
+        if (primId == 0) disp = prim_oscillate_bend(pos, restPos, t, attWeight, p0, p1, p2, p3, p4, p5);
+        else if (primId == 1) disp = prim_oscillate_translate(pos, restPos, t, attWeight, p0, p1, p2, p3, p4, p5);
+        else if (primId == 2) disp = prim_arc_translate(pos, restPos, t, attWeight, p0, p1, p2, p3, p4);
+        else disp = prim_rigid_rotate(pos, restPos, t, attWeight, p0, p1, p2, p3, p4, p5, p6, p7);
+    } else if (primId < 8) {
+        if (primId == 4) disp = prim_spring_settle(pos, restPos, t, attWeight, p0, p1, p2, p3, p4);
+        else if (primId == 5) disp = prim_radial_burst(pos, restPos, t, attWeight, p0, p1, p2, p3, p4);
+        else if (primId == 6) disp = prim_radial_contract(pos, restPos, t, attWeight, p0, p1, p2, p3, p4);
+        else disp = prim_spiral(pos, restPos, t, attWeight, p0, p1, p2, p3, p4, p5, p6, p7);
+    } else if (primId < 12) {
+        if (primId == 8) disp = prim_laminar_flow(pos, restPos, t, attWeight, p0, p1, p2, p3);
+        else if (primId == 9) disp = prim_curl_noise_flow(pos, restPos, t, attWeight, p0, p1, p2);
+        else if (primId == 10) disp = prim_brownian_scatter(pos, restPos, t, attWeight, p0, p1);
+        else disp = prim_wave_propagate(pos, restPos, t, attWeight, p0, p1, p2, p3, p4, p5);
+    } else {
+        if (primId == 12) disp = prim_stretch_along_axis(pos, restPos, t, attWeight, p0, p1, p2, p3, p4);
+        else if (primId == 13) disp = prim_twist(pos, restPos, t, attWeight, p0, p1, p2, p3, p4);
+        else disp = prim_pendulum(pos, restPos, t, attWeight, p0, p1, p2, p3, p4, p5);
+    }
+    return disp;
+}
+
+// ── MOTION PLAN READ ──
+struct PartMotionGPU {
+    int primitiveId;
+    float phase;
+    float startTime;
+    float duration;
+    float params[12];
+    bool active;
+};
+
+PartMotionGPU readPartMotion(sampler2D planTex, int partRow) {
+    PartMotionGPU pm;
+    float v = (float(partRow) + 0.5) / 33.0;
+    vec4 px0 = texture2D(planTex, vec2(0.125, v));
+    vec4 px1 = texture2D(planTex, vec2(0.375, v));
+    vec4 px2 = texture2D(planTex, vec2(0.625, v));
+    vec4 px3 = texture2D(planTex, vec2(0.875, v));
+    pm.primitiveId = int(px0.r + 0.5);
+    pm.phase = px0.g; pm.startTime = px0.b; pm.duration = px0.a;
+    pm.params[0] = px1.r; pm.params[1] = px1.g; pm.params[2] = px1.b; pm.params[3] = px1.a;
+    pm.params[4] = px2.r; pm.params[5] = px2.g; pm.params[6] = px2.b; pm.params[7] = px2.a;
+    pm.params[8] = px3.r; pm.params[9] = px3.g; pm.params[10] = px3.b; pm.params[11] = px3.a;
+    pm.active = (pm.primitiveId >= 0);
+    return pm;
+}
+
+float computeTime(PartMotionGPU pm, float currentTime, float speedScale) {
+    if (pm.duration > 0.0) return clamp((currentTime - pm.startTime) / pm.duration, 0.0, 1.0);
+    return (currentTime - pm.startTime) * speedScale + pm.phase;
+}
+
+vec3 evaluateSinglePlan(sampler2D planTex, vec2 uv, vec3 pos, vec3 restPos,
+    float currentTime, float speedScale, float ampScale) {
+    vec4 attr = texture2D(tPartAttr, uv);
+    int partId = int(attr.r + 0.5);
+    float attWeight = attr.g;
+    vec3 totalDisp = vec3(0.0);
+
+    PartMotionGPU wb = readPartMotion(planTex, 0);
+    if (wb.active) {
+        float t = computeTime(wb, currentTime, speedScale);
+        totalDisp += dispatchPrimitive(wb.primitiveId, pos, restPos, t, 1.0,
+            wb.params[0], wb.params[1], wb.params[2], wb.params[3],
+            wb.params[4], wb.params[5], wb.params[6], wb.params[7],
+            wb.params[8], wb.params[9], wb.params[10], wb.params[11]) * ampScale;
+    }
+    if (partId > 0 && partId <= 32) {
+        PartMotionGPU pm = readPartMotion(planTex, partId);
+        if (pm.active) {
+            float t = computeTime(pm, currentTime, speedScale);
+            totalDisp += dispatchPrimitive(pm.primitiveId, pos, restPos, t, attWeight,
+                pm.params[0], pm.params[1], pm.params[2], pm.params[3],
+                pm.params[4], pm.params[5], pm.params[6], pm.params[7],
+                pm.params[8], pm.params[9], pm.params[10], pm.params[11]) * ampScale;
+        }
+    }
+    return totalDisp;
+}
+
+vec3 evaluateMotionPlan(vec2 uv, vec3 pos, vec3 restPos, float currentTime) {
+    vec3 dispA = evaluateSinglePlan(tMotionPlan, uv, pos, restPos, currentTime, uMotionSpeedScale, uMotionAmplitudeScale);
+    if (uBlendFactor > 0.001) {
+        vec3 dispB = evaluateSinglePlan(tMotionPlanB, uv, pos, restPos, currentTime, uMotionSpeedScale, uMotionAmplitudeScale);
+        return mix(dispA, dispB, uBlendFactor);
+    }
+    return dispA;
+}
+
+// ══ MAIN ══
+void main() {
+    vec2 uv = gl_FragCoord.xy / resolution.xy;
+    vec4 selfPosition = texture2D(texturePosition, uv);
+    vec4 selfVelocity = texture2D(textureVelocity, uv);
+    vec3 position = selfPosition.xyz;
+    vec3 velocity = selfVelocity.xyz;
+
+    vec3 targetPosRaw = texture2D(tMorphTarget, uv).xyz;
+    vec3 targetPos = targetPosRaw;
+
+    // Motion plan displacement
+    if (uMotionPlanActive > 0.5) {
+        vec3 motionDisplacement = evaluateMotionPlan(uv, position, targetPosRaw, uTime);
+        float pitchGate = step(0.5, uPitchConfidence);
+        motionDisplacement.y += uPitchDeviation * 0.3 * pitchGate;
+        float arousalScale = mix(0.7, 1.5, clamp(uEmotionArousal, 0.0, 1.0));
+        motionDisplacement *= arousalScale;
+        targetPos += motionDisplacement;
+    }
+
+    // Spring force
+    vec3 springDir = targetPos - position;
+    vec3 springF = springDir * uSpringK;
+
+    // Curl noise
+    vec3 curl = curlNoise(position * 0.8 + uTime * 0.15);
+    vec3 noiseF = curl * 0.06;
+
+    // Forces
+    vec3 force = springF + noiseF;
+    velocity += force * uDelta;
+    velocity *= clamp(1.0 - uDrag * uDelta, 0.0, 1.0);
+
+    float speed = length(velocity);
+    if (speed > 10.0) velocity = normalize(velocity) * 10.0;
+
+    gl_FragColor = vec4(velocity, 1.0);
+}
+`;
+        const POSITION_FRAG = `
+uniform float uDelta;
+void main() {
+    vec2 uv = gl_FragCoord.xy / resolution.xy;
+    vec4 selfPosition = texture2D(texturePosition, uv);
+    vec4 selfVelocity = texture2D(textureVelocity, uv);
+    vec3 position = selfPosition.xyz + selfVelocity.xyz * uDelta;
+    gl_FragColor = vec4(position, selfPosition.w);
+}
+`;
+        const RENDER_VERT = `
+uniform sampler2D texturePosition;
+uniform sampler2D tPartAttr;
+uniform float uPointSize;
+uniform float uShowParts;
+varying vec3 vColor;
+void main() {
+    vec4 pos = texture2D(texturePosition, uv);
+    vec4 mvPosition = modelViewMatrix * vec4(pos.xyz, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+    gl_PointSize = uPointSize * (30.0 / -mvPosition.z);
+
+    // Color by part ID
+    if (uShowParts > 0.5) {
+        vec4 attr = texture2D(tPartAttr, uv);
+        float pid = attr.r;
+        if (pid < 0.5) vColor = vec3(0.7, 0.7, 0.8);       // body: grey
+        else if (pid < 1.5) vColor = vec3(1.0, 0.4, 0.4);   // head: red
+        else if (pid < 2.5) vColor = vec3(0.4, 1.0, 0.4);   // leg_fl: green
+        else if (pid < 3.5) vColor = vec3(0.4, 0.4, 1.0);   // leg_fr: blue
+        else if (pid < 4.5) vColor = vec3(1.0, 1.0, 0.3);   // leg_bl: yellow
+        else vColor = vec3(1.0, 0.5, 1.0);                   // leg_br: pink
+    } else {
+        vColor = vec3(0.9, 0.92, 1.0);
+    }
+}
+`;
+        const RENDER_FRAG = `
+varying vec3 vColor;
+void main() {
+    float dist = length(gl_PointCoord - vec2(0.5));
+    if (dist > 0.5) discard;
+    float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+    gl_FragColor = vec4(vColor * 0.8, alpha * 0.8);
+}
+`;
+
+        // ── SETUP ──────────────────────────────────────────────
+        const container = document.getElementById('canvas-container');
+        const fpsEl = document.getElementById('fps');
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 8);
+
+        // ── GENERATE MOCK POINT CLOUD ──────────────────────────
+        // A simple multi-ellipsoid "quadruped" with 6 parts
+        function generateQuadruped() {
+            const posData = new Float32Array(PARTICLE_COUNT * 4);
+            const partIdData = new Float32Array(PARTICLE_COUNT * 4);
+
+            const parts = [
+                { id: 0, center: [0, 0, 0], radius: [0.8, 0.5, 0.4], count: Math.floor(PARTICLE_COUNT * 0.35) },    // body
+                { id: 1, center: [0.9, 0.3, 0], radius: [0.3, 0.25, 0.25], count: Math.floor(PARTICLE_COUNT * 0.12) }, // head
+                { id: 2, center: [-0.4, -0.7, 0.25], radius: [0.12, 0.35, 0.12], count: Math.floor(PARTICLE_COUNT * 0.1) }, // leg_fl
+                { id: 3, center: [-0.4, -0.7, -0.25], radius: [0.12, 0.35, 0.12], count: Math.floor(PARTICLE_COUNT * 0.1) }, // leg_fr
+                { id: 4, center: [0.5, -0.7, 0.25], radius: [0.12, 0.35, 0.12], count: Math.floor(PARTICLE_COUNT * 0.1) },  // leg_bl
+                { id: 5, center: [0.5, -0.7, -0.25], radius: [0.12, 0.35, 0.12], count: 0 }, // leg_br (gets remainder)
+            ];
+            // Assign remainder to last part
+            const usedCount = parts.slice(0, -1).reduce((s, p) => s + p.count, 0);
+            parts[parts.length - 1].count = PARTICLE_COUNT - usedCount;
+
+            let idx = 0;
+            for (const part of parts) {
+                const ctr = part.center;
+                const rad = part.radius;
+                for (let i = 0; i < part.count; i++) {
+                    // Random point in ellipsoid (rejection sampling)
+                    let x, y, z;
+                    do {
+                        x = (Math.random() * 2 - 1);
+                        y = (Math.random() * 2 - 1);
+                        z = (Math.random() * 2 - 1);
+                    } while (x*x + y*y + z*z > 1);
+
+                    posData[idx * 4 + 0] = ctr[0] + x * rad[0];
+                    posData[idx * 4 + 1] = ctr[1] + y * rad[1];
+                    posData[idx * 4 + 2] = ctr[2] + z * rad[2];
+                    posData[idx * 4 + 3] = Math.random(); // random seed
+
+                    // Part attributes: R=partId, G=attachmentWeight
+                    const distFromCenter = Math.sqrt(x*x + y*y + z*z);
+                    partIdData[idx * 4 + 0] = part.id;              // partId
+                    partIdData[idx * 4 + 1] = distFromCenter;        // attachmentWeight (radial gradient)
+                    partIdData[idx * 4 + 2] = 0;
+                    partIdData[idx * 4 + 3] = 0;
+
+                    idx++;
+                }
+            }
+
+            return { posData, partIdData };
+        }
+
+        const { posData, partIdData } = generateQuadruped();
+
+        // ── GPGPU SETUP ────────────────────────────────────────
+        const gpuCompute = new GPUComputationRenderer(SIZE, SIZE, renderer);
+
+        const dtPosition = gpuCompute.createTexture();
+        const dtVelocity = gpuCompute.createTexture();
+
+        // Fill initial positions from our quadruped
+        const posArr = dtPosition.image.data;
+        const velArr = dtVelocity.image.data;
+        for (let i = 0; i < PARTICLE_COUNT * 4; i++) {
+            posArr[i] = posData[i];
+            velArr[i] = 0;
+        }
+
+        const velocityVar = gpuCompute.addVariable('textureVelocity', VELOCITY_FRAG, dtVelocity);
+        const positionVar = gpuCompute.addVariable('texturePosition', POSITION_FRAG, dtPosition);
+
+        gpuCompute.setVariableDependencies(velocityVar, [positionVar, velocityVar]);
+        gpuCompute.setVariableDependencies(positionVar, [positionVar, velocityVar]);
+
+        // Morph target texture (rest positions)
+        const morphTargetTex = new THREE.DataTexture(
+            new Float32Array(posData),
+            SIZE, SIZE, THREE.RGBAFormat, THREE.FloatType
+        );
+        morphTargetTex.needsUpdate = true;
+
+        // Part attribute texture
+        const partAttrTex = new THREE.DataTexture(
+            new Float32Array(partIdData),
+            SIZE, SIZE, THREE.RGBAFormat, THREE.FloatType
+        );
+        partAttrTex.needsUpdate = true;
+
+        // Motion plan textures (4×33)
+        function createPlanTexture() {
+            const data = new Float32Array(4 * 33 * 4);
+            for (let row = 0; row < 33; row++) data[row * 4 * 4] = -1.0; // inactive
+            const tex = new THREE.DataTexture(data, 4, 33, THREE.RGBAFormat, THREE.FloatType);
+            tex.needsUpdate = true;
+            return tex;
+        }
+        const motionPlanTex = createPlanTexture();
+        const motionPlanTexB = createPlanTexture();
+
+        // Set velocity uniforms
+        const vu = velocityVar.material.uniforms;
+        vu.uTime = { value: 0 };
+        vu.uDelta = { value: 0.016 };
+        vu.tMorphTarget = { value: morphTargetTex };
+        vu.uSpringK = { value: 3.0 };
+        vu.uDrag = { value: 3.0 };
+        vu.tPartAttr = { value: partAttrTex };
+        vu.tMotionPlan = { value: motionPlanTex };
+        vu.tMotionPlanB = { value: motionPlanTexB };
+        vu.uMotionPlanActive = { value: 1.0 };
+        vu.uMotionSpeedScale = { value: 1.0 };
+        vu.uMotionAmplitudeScale = { value: 1.0 };
+        vu.uBlendFactor = { value: 0.0 };
+        vu.uPitchDeviation = { value: 0.0 };
+        vu.uPitchConfidence = { value: 0.0 };
+        vu.uEmotionArousal = { value: 0.5 };
+        vu.uEmotionValence = { value: 0.0 };
+
+        positionVar.material.uniforms.uDelta = { value: 0.016 };
+
+        const error = gpuCompute.init();
+        if (error) { console.error('GPU init error:', error); alert(error); }
+
+        // ── RENDER SETUP ───────────────────────────────────────
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(PARTICLE_COUNT * 3);
+        const uvs = new Float32Array(PARTICLE_COUNT * 2);
+        let p = 0;
+        for (let j = 0; j < SIZE; j++) {
+            for (let i = 0; i < SIZE; i++) {
+                uvs[p * 2] = i / (SIZE - 1);
+                uvs[p * 2 + 1] = j / (SIZE - 1);
+                p++;
+            }
+        }
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                texturePosition: { value: null },
+                tPartAttr: { value: partAttrTex },
+                uPointSize: { value: 4.0 },
+                uShowParts: { value: 1.0 },
+            },
+            vertexShader: RENDER_VERT,
+            fragmentShader: RENDER_FRAG,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+        });
+
+        const points = new THREE.Points(geometry, material);
+        scene.add(points);
+
+        // ── MOTION PLAN HELPERS ────────────────────────────────
+        let animStartTime = 0;
+
+        function packPlan(primId, targetPartId, params, duration = 0) {
+            const data = motionPlanTex.image.data;
+            data.fill(0);
+            // Set all rows inactive
+            for (let row = 0; row < 33; row++) data[row * 16] = -1.0;
+
+            const row = targetPartId; // 0 = whole body, 1+ = specific part
+            const base = row * 16;
+            data[base + 0] = primId;
+            data[base + 1] = 0;       // phase
+            data[base + 2] = animStartTime; // startTime
+            data[base + 3] = duration;
+
+            for (let i = 0; i < 12; i++) {
+                data[base + 4 + i] = i < params.length ? params[i] : 0;
+            }
+            motionPlanTex.needsUpdate = true;
+        }
+
+        // Default primitive params for each
+        const PRIMITIVE_DEFAULTS = {
+            0: { params: [0,0,1, 0.5, 1.0, 0], desc: 'axis(0,0,1) amp=0.5 freq=1' },
+            1: { params: [0,1,0, 0.5, 1.0, 0], desc: 'dir(0,1,0) amp=0.5 freq=1' },
+            2: { params: [1.5, 3.0, 0,0,1], desc: 'apex=1.5 fwd=3 dir(0,0,1)' },
+            3: { params: [0,0,0, 0,1,0, 0.5, 1.0], desc: 'pivot(0,0,0) axis(0,1,0) amp=0.5 freq=1' },
+            4: { params: [0,1,0, 5.0, 0.7], desc: 'target(0,1,0) stiff=5 damp=0.7' },
+            5: { params: [0,0,0, 2.0, 3.0], desc: 'origin(0,0,0) str=2 decay=3' },
+            6: { params: [0,0,0, 0.8, 2.0], desc: 'center(0,0,0) str=0.8 decay=2' },
+            7: { params: [0,0,0, 0,1,0, 2.0, 0.3], desc: 'center(0,0,0) axis(0,1,0) ang=2 rad=0.3' },
+            8: { params: [1,0,0, 1.0], desc: 'dir(1,0,0) speed=1' },
+            9: { params: [1.0, 0.5, 0.5], desc: 'scale=1 speed=0.5 amp=0.5' },
+            10: { params: [2.0, 42.0], desc: 'diffusion=2 seed=42' },
+            11: { params: [1,0,0, 2.0, 0.3, 2.0], desc: 'dir(1,0,0) wl=2 amp=0.3 speed=2' },
+            12: { params: [0,1,0, 1.5, 1.0], desc: 'axis(0,1,0) scale=1.5 freq=1' },
+            13: { params: [0,1,0, 1.5, 0.5], desc: 'axis(0,1,0) ang/unit=1.5 freq=0.5' },
+            14: { params: [0,2,0, 1.5, 0.5, 0.3], desc: 'pivot(0,2,0) len=1.5 amp=0.5 damp=0.3' },
+        };
+
+        const ONE_SHOTS = new Set([2, 4, 5, 6, 10]);
+
+        // ── UI CONTROLS ────────────────────────────────────────
+        const primSelect = document.getElementById('primitive-select');
+        const ampSlider = document.getElementById('amplitude');
+        const freqSlider = document.getElementById('frequency');
+        const speedSlider = document.getElementById('speed');
+        const durSlider = document.getElementById('duration');
+        const partSlider = document.getElementById('part-id');
+        const audioToggle = document.getElementById('audio-mod');
+        const showPartsToggle = document.getElementById('show-parts');
+        const restartBtn = document.getElementById('restart-btn');
+
+        // Wire slider value displays
+        for (const id of ['amplitude', 'frequency', 'speed', 'duration', 'part-id']) {
+            const sl = document.getElementById(id);
+            const val = document.getElementById(id + '-val');
+            sl.addEventListener('input', () => {
+                val.textContent = parseFloat(sl.value).toFixed(id === 'part-id' ? 0 : 1);
+                updateMotionPlan();
+            });
+        }
+
+        primSelect.addEventListener('change', updateMotionPlan);
+        restartBtn.addEventListener('click', () => {
+            animStartTime = time;
+            updateMotionPlan();
+        });
+        showPartsToggle.addEventListener('change', () => {
+            material.uniforms.uShowParts.value = showPartsToggle.checked ? 1.0 : 0.0;
+        });
+
+        function updateMotionPlan() {
+            const primId = parseInt(primSelect.value);
+            if (primId < 0) {
+                vu.uMotionPlanActive.value = 0.0;
+                return;
+            }
+            vu.uMotionPlanActive.value = 1.0;
+
+            const defaults = PRIMITIVE_DEFAULTS[primId];
+            const params = [...defaults.params];
+
+            // Override amplitude param (p3 for most, varies by primitive)
+            const amp = parseFloat(ampSlider.value);
+            const freq = parseFloat(freqSlider.value);
+            if (primId <= 1) { params[3] = amp; params[4] = freq; }
+            else if (primId === 3) { params[6] = amp; params[7] = freq; }
+            else if (primId === 5 || primId === 6) { params[3] = amp; }
+            else if (primId === 7) { params[6] = freq; }
+            else if (primId === 11) { params[4] = amp; params[5] = freq; }
+            else if (primId === 12) { params[3] = 1.0 + amp; params[4] = freq; }
+            else if (primId === 13) { params[3] = amp * 3; params[4] = freq; }
+            else if (primId === 14) { params[4] = amp; }
+
+            const targetPart = parseInt(partSlider.value);
+            const dur = ONE_SHOTS.has(primId) ? parseFloat(durSlider.value) : 0;
+
+            vu.uMotionSpeedScale.value = parseFloat(speedSlider.value);
+            animStartTime = time;
+            packPlan(primId, targetPart, params, dur);
+        }
+
+        // Initial setup
+        let time = 0;
+        updateMotionPlan();
+
+        // ── ANIMATION LOOP ─────────────────────────────────────
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fpsAccum = 0;
+        let rotate = true;
+
+        renderer.domElement.addEventListener('click', () => { rotate = !rotate; });
+
+        function animate(now) {
+            requestAnimationFrame(animate);
+
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+            time += dt;
+
+            // FPS
+            frameCount++;
+            fpsAccum += dt;
+            if (fpsAccum >= 0.5) {
+                fpsEl.textContent = `${Math.round(frameCount / fpsAccum)} FPS | ${PARTICLE_COUNT} particles`;
+                frameCount = 0;
+                fpsAccum = 0;
+            }
+
+            // Audio modulation mock
+            if (audioToggle.checked) {
+                vu.uPitchDeviation.value = Math.sin(time * 0.7) * 0.5;
+                vu.uPitchConfidence.value = 0.9;
+                vu.uEmotionArousal.value = 0.5 + Math.sin(time * 0.3) * 0.3;
+                vu.uEmotionValence.value = Math.sin(time * 0.2) * 0.4;
+            } else {
+                vu.uPitchDeviation.value = 0;
+                vu.uPitchConfidence.value = 0;
+                vu.uEmotionArousal.value = 0.5;
+                vu.uEmotionValence.value = 0;
+            }
+
+            // Camera rotation
+            if (rotate) {
+                camera.position.x = Math.sin(time * 0.2) * 6;
+                camera.position.z = Math.cos(time * 0.2) * 6;
+                camera.position.y = Math.sin(time * 0.15) * 1.5;
+                camera.lookAt(0, 0, 0);
+            }
+
+            // Update GPGPU
+            vu.uTime.value = time;
+            vu.uDelta.value = dt;
+            positionVar.material.uniforms.uDelta.value = dt;
+            gpuCompute.compute();
+
+            // Update render uniforms
+            material.uniforms.texturePosition.value =
+                gpuCompute.getCurrentRenderTarget(positionVar).texture;
+
+            renderer.render(scene, camera);
+        }
+
+        requestAnimationFrame(animate);
+
+        // ── RESIZE ─────────────────────────────────────────────
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
