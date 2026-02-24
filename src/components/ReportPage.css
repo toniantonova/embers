@@ -1,0 +1,667 @@
+/* ═══════════════════════════════════════════════════════════════════════
+ * REPORT PAGE — Distilled.pub-inspired article layout
+ * ═══════════════════════════════════════════════════════════════════════
+ * Dark theme, wide reading column, full-bleed media, beautiful type.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── RESET for report page ─────────────────────────────────────────── */
+/* Override the global overflow:hidden that the canvas view sets on body/html */
+html:has(.report-page),
+html:has(.report-page) body {
+    overflow: auto !important;
+    height: auto !important;
+}
+
+.report-page,
+.report-page * {
+    box-sizing: border-box;
+}
+
+.report-page {
+    --rp-bg: #0a0a0f;
+    --rp-surface: #111118;
+    --rp-surface-raised: #18181f;
+    --rp-border: rgba(255, 255, 255, 0.06);
+    --rp-text: rgba(255, 255, 255, 0.88);
+    --rp-text-muted: rgba(255, 255, 255, 0.5);
+    --rp-text-dim: rgba(255, 255, 255, 0.3);
+    --rp-accent: #8b5cf6;
+    --rp-accent-glow: rgba(139, 92, 246, 0.15);
+    --rp-gold: #f5c542;
+    --rp-green: #4ade80;
+    --rp-red: #f87171;
+    --rp-blue: #60a5fa;
+
+    --rp-col-width: 720px;
+    --rp-wide-width: 960px;
+
+    background: var(--rp-bg);
+    color: var(--rp-text);
+    font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
+    font-size: 18px;
+    line-height: 1.75;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    width: 100%;
+}
+
+/* ── BACK LINK ─────────────────────────────────────────────────────── */
+.report-back-link {
+    position: fixed;
+    top: 1.25rem;
+    left: 1.25rem;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--rp-text-muted);
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--rp-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: all 0.2s ease;
+}
+
+.report-back-link:hover {
+    color: var(--rp-text);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ── HERO ───────────────────────────────────────────────────────────── */
+.report-hero {
+    position: relative;
+    padding: 6rem 2rem 4rem;
+    text-align: center;
+    max-width: var(--rp-col-width);
+    margin: 0 auto;
+}
+
+.report-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200%;
+    height: 100%;
+    background: radial-gradient(ellipse 60% 50% at 50% 0%, var(--rp-accent-glow), transparent);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.report-hero>* {
+    position: relative;
+    z-index: 1;
+}
+
+.report-hero__title {
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    font-weight: 500;
+    line-height: 1.25;
+    color: rgba(255, 255, 255, 0.92);
+    margin: 0 0 1rem;
+    letter-spacing: -0.01em;
+}
+
+.report-hero__subtitle {
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: 1.15rem;
+    font-style: italic;
+    color: var(--rp-text-muted);
+    margin: 0 0 1.5rem;
+    line-height: 1.6;
+}
+
+.report-hero__meta {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    color: var(--rp-text-dim);
+}
+
+.report-hero__meta strong {
+    color: var(--rp-text-muted);
+    font-weight: 500;
+}
+
+/* ── HERO VIDEO ─────────────────────────────────────────────────────── */
+.report-hero-media {
+    max-width: var(--rp-wide-width);
+    margin: 2rem auto 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--rp-border);
+    box-shadow: 0 8px 60px rgba(0, 0, 0, 0.6);
+}
+
+.report-hero-media img,
+.report-hero-media video {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ── BODY COLUMN ────────────────────────────────────────────────────── */
+.report-body {
+    max-width: var(--rp-col-width);
+    margin: 0 auto;
+    padding: 0 2rem 6rem;
+}
+
+/* ── HEADINGS ───────────────────────────────────────────────────────── */
+.report-body h2 {
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: 1.85rem;
+    font-weight: 600;
+    color: white;
+    margin: 4rem 0 1rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--rp-border);
+    letter-spacing: -0.01em;
+}
+
+.report-body h2:first-child {
+    border-top: none;
+    padding-top: 0;
+}
+
+.report-body h3 {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+    margin: 2.5rem 0 0.75rem;
+    letter-spacing: -0.005em;
+}
+
+.report-body h4 {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--rp-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 2rem 0 0.5rem;
+}
+
+/* ── PARAGRAPHS ─────────────────────────────────────────────────────── */
+.report-body p {
+    margin: 0 0 1.25rem;
+    color: var(--rp-text);
+}
+
+.report-body p strong {
+    color: white;
+    font-weight: 600;
+}
+
+/* ── LINKS ──────────────────────────────────────────────────────────── */
+.report-body a {
+    color: var(--rp-accent);
+    text-decoration: underline;
+    text-decoration-color: rgba(139, 92, 246, 0.3);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 0.2s;
+}
+
+.report-body a:hover {
+    text-decoration-color: var(--rp-accent);
+}
+
+/* ── LISTS ──────────────────────────────────────────────────────────── */
+.report-body ul,
+.report-body ol {
+    padding-left: 1.5rem;
+    margin: 0 0 1.25rem;
+}
+
+.report-body li {
+    margin-bottom: 0.5rem;
+}
+
+/* ── CODE BLOCKS ────────────────────────────────────────────────────── */
+.report-body code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.82em;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #e2b3ff;
+}
+
+.report-body pre {
+    background: var(--rp-surface);
+    border: 1px solid var(--rp-border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+.report-body pre code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: inherit;
+}
+
+/* ── BLOCKQUOTES (Side-notes / Asides) ──────────────────────────────── */
+.report-body blockquote {
+    border-left: 3px solid var(--rp-accent);
+    margin: 1.5rem 0;
+    padding: 0.75rem 1.25rem;
+    background: var(--rp-accent-glow);
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: var(--rp-text-muted);
+}
+
+.report-body blockquote strong {
+    color: var(--rp-text);
+    font-style: normal;
+}
+
+/* ── CALLOUT BOXES ──────────────────────────────────────────────────── */
+.report-callout {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.75rem 0;
+    border: 1px solid;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.65;
+}
+
+.report-callout--insight {
+    background: rgba(139, 92, 246, 0.06);
+    border-color: rgba(139, 92, 246, 0.15);
+}
+
+.report-callout--insight .report-callout__label {
+    color: var(--rp-accent);
+}
+
+.report-callout--decision {
+    background: rgba(245, 197, 66, 0.04);
+    border-color: rgba(245, 197, 66, 0.12);
+}
+
+.report-callout--decision .report-callout__label {
+    color: var(--rp-gold);
+}
+
+.report-callout--tbd {
+    background: rgba(96, 165, 250, 0.04);
+    border-color: rgba(96, 165, 250, 0.12);
+}
+
+.report-callout--tbd .report-callout__label {
+    color: var(--rp-blue);
+}
+
+.report-callout__label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+/* ── FIGURE / MEDIA BLOCKS ──────────────────────────────────────────── */
+.report-figure {
+    margin: 2rem 0;
+}
+
+.report-figure--wide {
+    margin-left: -2rem;
+    margin-right: -2rem;
+    max-width: calc(100% + 4rem);
+}
+
+.report-figure img,
+.report-figure video {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 10px;
+    border: 1px solid var(--rp-border);
+}
+
+.report-figure__caption {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    color: var(--rp-text-dim);
+    text-align: center;
+    margin-top: 0.75rem;
+    font-style: italic;
+}
+
+/* ── SIDE-BY-SIDE FIGURES ───────────────────────────────────────────── */
+.report-figure-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.report-figure-row img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    border: 1px solid var(--rp-border);
+}
+
+@media (max-width: 600px) {
+    .report-figure-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── TABLES ─────────────────────────────────────────────────────────── */
+.report-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.85rem;
+}
+
+.report-body th {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.report-body td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--rp-border);
+    color: var(--rp-text);
+}
+
+.report-body tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* ── ARCHITECTURE DIAGRAM (HTML/CSS) ────────────────────────────────── */
+.arch-diagram {
+    background: var(--rp-surface);
+    border: 1px solid var(--rp-border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 2rem 0;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.arch-tier {
+    border: 1px solid var(--rp-border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.arch-tier--client {
+    background: rgba(74, 222, 128, 0.03);
+    border-color: rgba(74, 222, 128, 0.12);
+}
+
+.arch-tier--server {
+    background: rgba(96, 165, 250, 0.03);
+    border-color: rgba(96, 165, 250, 0.12);
+}
+
+.arch-tier__badge {
+    position: absolute;
+    top: -10px;
+    left: 16px;
+    background: var(--rp-surface);
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    border: 1px solid inherit;
+}
+
+.arch-tier--client .arch-tier__badge {
+    color: var(--rp-green);
+    border-color: rgba(74, 222, 128, 0.2);
+}
+
+.arch-tier--server .arch-tier__badge {
+    color: var(--rp-blue);
+    border-color: rgba(96, 165, 250, 0.2);
+}
+
+.arch-tier__latency {
+    font-size: 13px;
+    color: var(--rp-text-muted);
+    margin-bottom: 0.75rem;
+}
+
+.arch-tier__latency strong {
+    color: white;
+    font-weight: 600;
+}
+
+.arch-blocks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.arch-block {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--rp-border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.arch-block__name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--rp-text);
+    margin-bottom: 4px;
+}
+
+.arch-block__detail {
+    font-size: 11px;
+    color: var(--rp-text-dim);
+}
+
+.arch-arrow {
+    text-align: center;
+    padding: 0.5rem 0;
+    color: var(--rp-text-dim);
+    font-size: 1.2rem;
+}
+
+/* ── EMOTION MAP (Visual Table) ─────────────────────────────────────── */
+.emotion-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+}
+
+.emotion-card {
+    background: var(--rp-surface);
+    border: 1px solid var(--rp-border);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+.emotion-card:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.emotion-card__emoji {
+    font-size: 1.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.emotion-card__name {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.4rem;
+}
+
+.emotion-card__desc {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 11px;
+    color: var(--rp-text-dim);
+    line-height: 1.5;
+}
+
+/* ── FEATURE MAP TABLE ──────────────────────────────────────────────── */
+.feature-map {
+    margin: 1.5rem 0;
+}
+
+.feature-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 1fr;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--rp-border);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    align-items: center;
+}
+
+.feature-row:first-child {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--rp-text-dim);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.feature-row__name {
+    font-weight: 600;
+    color: white;
+}
+
+.feature-row__source {
+    color: var(--rp-text-muted);
+}
+
+.feature-row__effect {
+    color: var(--rp-text);
+}
+
+/* ── PERFORMANCE CARD ───────────────────────────────────────────────── */
+.perf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+}
+
+.perf-card {
+    background: var(--rp-surface);
+    border: 1px solid var(--rp-border);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.perf-card__value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.25rem;
+}
+
+.perf-card__label {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 12px;
+    color: var(--rp-text-dim);
+}
+
+/* ── REFERENCES ─────────────────────────────────────────────────────── */
+.report-references {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.8rem;
+    line-height: 1.7;
+    color: var(--rp-text-muted);
+}
+
+.report-references li {
+    margin-bottom: 0.3rem;
+}
+
+/* ── FOOTER ─────────────────────────────────────────────────────────── */
+.report-footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    border-top: 1px solid var(--rp-border);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    color: var(--rp-text-dim);
+    font-style: italic;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .report-hero {
+        padding: 4rem 1.25rem 2.5rem;
+    }
+
+    .report-body {
+        padding: 0 1.25rem 4rem;
+    }
+
+    .report-body h2 {
+        font-size: 1.5rem;
+    }
+
+    .report-figure--wide {
+        margin-left: -1.25rem;
+        margin-right: -1.25rem;
+        max-width: calc(100% + 2.5rem);
+    }
+
+    .arch-blocks {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .emotion-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .perf-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .feature-row {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+    }
+}
