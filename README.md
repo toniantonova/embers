@@ -1,4 +1,9 @@
-# Dots — Speech-to-Visualization
+> **Mirror repo (read-only).**  
+> Primary repo: https://github.com/toni-antonova/embers  
+> Live demo: https://embers.camp  
+> Status: This repo is a temporary snapshot for reference and will be archived.
+>
+> # Dots — Speech-to-Visualization
 
 A real-time 3D particle visualizer that reacts to audio input. Particles are driven by GPU-accelerated physics (GPGPU via `GPUComputationRenderer`) and respond to energy, tension, urgency, and breathiness extracted from the microphone.
 
