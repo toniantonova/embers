@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>dots</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+  <script>
+    // Register service worker for Moonshine model pre-caching.
+    // Only register if sw.js is reachable (avoids 404 on GCS-hosted builds).
+    if ('serviceWorker' in navigator) {
+      var register = function () {
+        fetch('./sw.js', { method: 'HEAD' }).then(function (r) {
+          if (r.ok) navigator.serviceWorker.register('./sw.js');
+        }).catch(function () { });
+      };
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(register);
+      } else {
+        setTimeout(register, 3000);
+      }
+    }
+  </script>
+</body>
+
+</html>
