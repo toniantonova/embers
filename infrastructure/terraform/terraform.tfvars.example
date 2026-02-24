@@ -1,0 +1,16 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Example terraform.tfvars — copy to terraform.tfvars and fill in values
+# ─────────────────────────────────────────────────────────────────────────
+
+# REQUIRED — your GCP project ID
+project_id = "your-gcp-project-id"
+
+# Optional overrides (defaults shown)
+# region        = "us-central1"
+# service_name  = "lumen-pipeline"
+# min_instances = 0
+# max_instances = 1
+# gpu_type      = "nvidia-rtx-pro-6000"
+
+# Set after first build. Leave empty for initial apply.
+# container_image = "us-central1-docker.pkg.dev/your-project/lumen-pipeline-docker/lumen-pipeline:latest"

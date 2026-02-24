@@ -1,0 +1,50 @@
+# Cloud Build — Build & Push Lumen Base Image (Kaniko)
+#
+# This builds the heavy base image containing all system packages,
+# Python dependencies (~2GB of ML wheels), and PartCrafter. The
+# application Dockerfile inherits from this image and only copies
+# app code — cutting builds from 15-30 min to 1-2 min.
+#
+# Uses Kaniko for native layer caching to Artifact Registry. Kaniko
+# caches each Dockerfile layer as a separate image tag, so unchanged
+# layers (system packages, PyTorch wheels) are reused even if later
+# layers change. Cache TTL is 168h (7 days) to match the weekly
+# rebuild schedule.
+#
+# Manual usage:
+#   gcloud builds submit \
+#     --config infrastructure/cloudbuild-base.yaml \
+#     --project=lumen-pipeline --region=us-central1 \
+#     server/
+#
+# Rebuild triggers:
+#   - pyproject.toml or uv.lock changes
+#   - Weekly schedule (catches OS security patches + dependency updates)
+#   - Manual when CUDA/Python version changes
+
+substitutions:
+  _BASE_IMAGE: "us-central1-docker.pkg.dev/lumen-pipeline/lumen-pipeline-docker/lumen-base"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: "E2_HIGHCPU_8"
+
+steps:
+  # ── Build + push with Kaniko (layer caching to registry) ─────────
+  # Kaniko caches each layer as a separate image in the cache repo.
+  # Unchanged layers (system packages, PyTorch wheels) are reused
+  # across builds — only changed layers are rebuilt.
+  - name: "gcr.io/kaniko-project/executor:latest"
+    args:
+      - "--dockerfile=Dockerfile.base"
+      - "--context=."
+      - "--destination=${_BASE_IMAGE}:latest"
+      - "--cache=true"
+      - "--cache-ttl=168h"
+      - "--cache-repo=${_BASE_IMAGE}-cache"
+      - "--compressed-caching=false"
+      - "--snapshot-mode=redo"
+
+# Note: no `images:` block needed — Kaniko pushes via --destination.
+
+timeout: "2400s"  # 40 min — first build is slow; cached rebuilds are ~5-10 min

@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Lumen Pipeline — Cloud Build for GCE Deploy
+# ─────────────────────────────────────────────────────────────────────────────
+# Reuses the exact same Dockerfiles and Artifact Registry repo as Cloud Run.
+# After building and pushing, SSHs into the GCE VM to restart the container.
+# ─────────────────────────────────────────────────────────────────────────────
+
+steps:
+  # Step 1: Build the app image (same Dockerfiles as Cloud Run)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_IMAGE_URI}'
+      - '--cache-from'
+      - '${_BASE_IMAGE}'
+      - '.'
+    dir: 'server'
+
+  # Step 2: Push to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_IMAGE_URI}']
+
+  # Step 3: Restart container on GCE VM
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud compute ssh ${_VM_NAME} \
+          --zone=${_ZONE} \
+          --project=$PROJECT_ID \
+          --tunnel-through-iap \
+          --command="
+            set -e
+            docker pull ${_IMAGE_URI}
+            docker stop lumen-server 2>/dev/null || true
+            docker rm lumen-server 2>/dev/null || true
+
+            API_KEY=\$$(gcloud secrets versions access latest --secret=lumen-api-key --project=$PROJECT_ID --quiet)
+            HF_TOKEN=\$$(gcloud secrets versions access latest --secret=lumen-hf-token --project=$PROJECT_ID --quiet)
+
+            docker run -d \
+              --name lumen-server \
+              --gpus all \
+              --restart unless-stopped \
+              -p 8080:8080 \
+              -e CACHE_BUCKET=${_CACHE_BUCKET} \
+              -e MODEL_CACHE_DIR=/home/appuser/models \
+              -e MODEL_WEIGHTS_BUCKET=${_WEIGHTS_BUCKET} \
+              -e API_KEY=\"\$$API_KEY\" \
+              -e HF_TOKEN=\"\$$HF_TOKEN\" \
+              -e ALLOWED_ORIGINS='https://storage.googleapis.com,http://localhost:5173' \
+              -e EAGER_LOAD_ALL=true \
+              -e VRAM_OFFLOAD_THRESHOLD_GB=99 \
+              -e LOG_JSON=true \
+              ${_IMAGE_URI}
+          "
+
+images:
+  - '${_IMAGE_URI}'
+
+substitutions:
+  _IMAGE_URI: 'us-central1-docker.pkg.dev/lumen-pipeline/lumen-pipeline-docker/lumen-pipeline:latest'
+  _BASE_IMAGE: 'us-central1-docker.pkg.dev/lumen-pipeline/lumen-pipeline-docker/lumen-base:latest'
+  _VM_NAME: 'lumen-gce-gpu'
+  _ZONE: 'us-west1-b'
+  _CACHE_BUCKET: 'lumen-shape-cache-lumen-pipeline'
+  _WEIGHTS_BUCKET: 'lumen-model-weights-lumen-pipeline'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

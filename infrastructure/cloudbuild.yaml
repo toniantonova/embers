@@ -1,0 +1,58 @@
+# Cloud Build — Build & Push Lumen Pipeline Image
+#
+# Usage:
+#   gcloud builds submit \
+#     --config infrastructure/cloudbuild.yaml \
+#     --project=lumen-pipeline --region=us-central1 \
+#     .
+#
+# Layer caching:
+#   Step 1 pulls the previous :latest image so Docker can reuse unchanged
+#   layers via --cache-from. Code-only changes (no pyproject.toml/uv.lock
+#   edits) skip the entire dependency layer → ~30-60s builds instead of 15min.
+#
+# GPU + Secret Manager config lives in Terraform, not here.
+
+substitutions:
+  _IMAGE: "us-central1-docker.pkg.dev/lumen-pipeline/lumen-pipeline-docker/lumen-pipeline"
+  _BASE_IMAGE: "us-central1-docker.pkg.dev/lumen-pipeline/lumen-pipeline-docker/lumen-base"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: "E2_HIGHCPU_8"
+
+steps:
+  # ── Step 0: Pull base image + previous app image for layer cache ──────
+  # Tests are enforced locally by pre-commit, pre-push, and `lets validate`.
+  - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        docker pull ${_BASE_IMAGE}:latest || true
+        docker pull ${_IMAGE}:latest || true
+
+  # ── Step 2: Build with pre-built base image ──────────────────────────
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "--build-arg"
+      - "BASE_IMAGE=${_BASE_IMAGE}:latest"
+      - "--cache-from"
+      - "${_IMAGE}:latest"
+      - "-t"
+      - "${_IMAGE}:latest"
+      - "-f"
+      - "server/Dockerfile"
+      - "server/"
+    env:
+      - "DOCKER_BUILDKIT=1"
+
+  # ── Step 3: Push :latest ─────────────────────────────────────────────
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "${_IMAGE}:latest"]
+
+images:
+  - "${_IMAGE}:latest"
+
+timeout: "1800s"  # 30 min

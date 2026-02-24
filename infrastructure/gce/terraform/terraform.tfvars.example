@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Example variable values — copy to terraform.tfvars and customize
+# ─────────────────────────────────────────────────────────────────────────────
+
+project_id = "lumen-pipeline"
+region     = "us-west1"
+zone       = "us-west1-b"
+
+# GPU configuration
+# L40S (48 GB) — recommended. g2-standard-8 = 8 vCPU, 32 GB RAM, 1× L40S
+machine_type = "g2-standard-8"
+gpu_type     = "nvidia-l40s"
+
+# A100 40 GB — fallback if L40S quota unavailable
+# machine_type = "a2-highgpu-1g"
+# gpu_type     = "nvidia-tesla-a100"
+
+disk_size_gb = 200
+
+# Network
+assign_public_ip  = true
+use_default_network = false
+allowed_ssh_cidr  = "0.0.0.0/0"    # Restrict to your IP for production
+allowed_http_cidr = "0.0.0.0/0"    # Restrict to your IP or LB range
+
+# CORS — set to your frontend origin(s) for production
+# allowed_origins = "https://app.example.com,http://localhost:5173"
+allowed_origins = ""
