@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "lumen-pipeline"
+  },
+  "targets": {
+    "lumen-pipeline": {
+      "hosting": {
+        "embers-camp": [
+          "embers-camp"
+        ]
+      }
+    }
+  }
+}

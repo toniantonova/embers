@@ -1,0 +1,25 @@
+# Cloud Build ignore — minimize upload tarball.
+# Cloud Build only needs server/ (Docker build context).
+# Strategy: exclude EVERYTHING, then whitelist server/.
+
+# ── Exclude everything by default ────────────────────────────────────
+*
+
+# ── Whitelist server/ (Docker build context) ─────────────────────────
+!server/
+!server/**
+
+# ── Re-exclude server dev artifacts that Docker doesn't need ─────────
+server/.venv/
+server/.pytest_cache/
+server/.mypy_cache/
+server/.ruff_cache/
+server/htmlcov/
+server/**/__pycache__/
+server/**/*.egg-info/
+
+# ── Re-exclude documentation ─────────────────────────────────────────
+server/**/*.md
+!server/**/README.md
+server/**/*.xlsx
+server/**/*.xls
