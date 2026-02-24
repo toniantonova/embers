@@ -1,0 +1,205 @@
+shell: bash
+
+commands:
+  install:
+    description: Install all dependencies including dev and ml extras
+    cmd: uv sync --all-extras
+
+  test:
+    description: Run test suite
+    cmd: uv run pytest tests/ -v
+
+  test-cov:
+    description: Run tests with coverage
+    cmd: uv run pytest tests/ -v --cov=app --cov-report=term-missing
+
+  format:
+    description: Format code with ruff
+    cmd: uv run ruff format app/ tests/
+
+  lint:
+    description: Lint code with ruff
+    cmd: uv run ruff check app/ tests/
+
+  lint-fix:
+    description: Lint and auto-fix
+    cmd: uv run ruff check --fix app/ tests/
+
+  typecheck:
+    description: Run mypy type checking
+    cmd: uv run mypy app/
+
+  validate:
+    description: Run all checks (frontend + backend format + lint + typecheck + test)
+    cmd: |
+      echo "── Frontend ──"
+      (cd .. && npx eslint . --quiet) && echo "  ✓ ESLint"
+      (cd .. && npx tsc --noEmit) && echo "  ✓ TypeScript"
+      (cd .. && npx vitest run --reporter=dot) && echo "  ✓ Vitest"
+      echo "── Backend ──"
+      uv run ruff format --check app/ tests/
+      uv run ruff check app/ tests/
+      uv run mypy app/
+      uv run python scripts/check_heavy_pins.py
+      uv run pytest tests/ -v
+
+  preflight:
+    description: Verify all ML imports resolve + deps in sync (no GPU needed) — run before build
+    cmd: |
+      FAILED=0
+      IS_MAC=$([[ "$(uname)" == "Darwin" ]] && echo 1 || echo 0)
+
+      echo "Dependency pins:"
+      uv run python scripts/check_heavy_pins.py || FAILED=1
+
+      try_import() {
+        local label="$1"; shift
+        UV_TORCH_BACKEND=cpu uv run python -c "$*" 2>/dev/null
+        if [ $? -eq 0 ]; then
+          echo "  ✓ $label"
+        elif [ "$IS_MAC" = "1" ]; then
+          echo "  ⚠ $label — skipped (native crash on macOS)"
+        else
+          echo "  ✗ $label FAILED"
+          FAILED=1
+        fi
+      }
+
+      echo "Core ML:"
+      try_import "torch"                    "import torch; print(f'  ({torch.__version__})', end='')"
+      try_import "StableDiffusionXLPipeline" "from diffusers import StableDiffusionXLPipeline"
+
+      echo "Native C++ extensions:"
+      try_import "torch_cluster"            "import torch_cluster"
+
+      echo "PartCrafter deps:"
+      try_import "einops, omegaconf, etc."  "import einops, omegaconf, jaxtyping, peft, trimesh"
+      try_import "cv2, skimage, etc."       "import cv2, skimage, sklearn, huggingface_hub"
+
+      echo "App modules:"
+      try_import "PartCrafterModel"         "from app.models.partcrafter import PartCrafterModel"
+      try_import "SDXLTurboModel"           "from app.models.sdxl_turbo import SDXLTurboModel"
+      try_import "PipelineOrchestrator"     "from app.services.pipeline import PipelineOrchestrator"
+
+      echo ""
+      if [ "$FAILED" = "1" ]; then
+        echo "FAILED — fix errors above before deploying."
+        exit 1
+      fi
+      echo "All checks pass — safe to build + deploy."
+      [ "$IS_MAC" = "1" ] && echo "Note: items marked ⚠ require Linux/CUDA — verified during docker build."
+
+  serve:
+    description: Run server locally with hot reload
+    cmd: uv run uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8080 --reload
+
+  build-base:
+    description: Build and push the pre-built base image (run when deps change)
+    cmd: |
+      cd .. && gcloud builds submit \
+        --config infrastructure/cloudbuild-base.yaml \
+        --project=lumen-pipeline --region=us-central1 \
+        server/
+
+  build-local:
+    description: Build Docker image locally (uses base image if available)
+    cmd: docker build -t lumen-server .
+
+  lock:
+    description: Regenerate lock file after dependency changes
+    cmd: uv lock
+
+  build:
+    description: Build and push Docker image via Cloud Build (with layer caching)
+    cmd: |
+      cd .. && gcloud builds submit \
+        --config infrastructure/cloudbuild.yaml \
+        --project=lumen-pipeline --region=us-central1 \
+        .
+
+  deploy:
+    description: Deploy latest image to Cloud Run (in-place update via services replace)
+    cmd: |
+      echo "Deploying service from service.yaml..."
+      gcloud run services replace ../infrastructure/service.yaml \
+        --project=lumen-pipeline --region=us-central1 &&
+      gcloud run services add-iam-policy-binding lumen-pipeline \
+        --member="allUsers" --role="roles/run.invoker" \
+        --project=lumen-pipeline --region=us-central1 \
+        --quiet &&
+      echo "✓ Deploy complete"
+
+  apply-terraform:
+    description: Apply Terraform config (infra-only — buckets, secrets, IAM, monitoring)
+    cmd: cd ../infrastructure/terraform && terraform apply -auto-approve
+
+  release:
+    description: Full release — cloud build + deploy + health check
+    cmd: |
+      echo "── 1/3 Building image via Cloud Build..." &&
+      cd .. && gcloud builds submit \
+        --config infrastructure/cloudbuild.yaml \
+        --project=lumen-pipeline --region=us-central1 \
+        . &&
+      echo "── 2/3 Deploying service..." &&
+      gcloud run services replace infrastructure/service.yaml \
+        --project=lumen-pipeline --region=us-central1 &&
+      gcloud run services add-iam-policy-binding lumen-pipeline \
+        --member="allUsers" --role="roles/run.invoker" \
+        --project=lumen-pipeline --region=us-central1 \
+        --quiet &&
+      echo "── 3/3 Checking health..." &&
+      SERVICE_URL=$(gcloud run services describe lumen-pipeline --project=lumen-pipeline --region=us-central1 --format='value(status.url)') &&
+      for i in $(seq 1 30); do
+        STATUS=$(curl -s -o /dev/null -w '%{http_code}' "$SERVICE_URL/health/ready" 2>/dev/null || echo "000")
+        if [ "$STATUS" = "200" ]; then
+          echo "✓ Service healthy!"
+          curl -s "$SERVICE_URL/health/ready" | python3 -m json.tool
+          exit 0
+        fi
+        echo "  Waiting for readiness... ($i/30, status=$STATUS)"
+        sleep 10
+      done
+      echo "✗ Health check timed out (300s). Check logs: gcloud logging read 'resource.labels.service_name=\"lumen-pipeline\"' --project=lumen-pipeline --limit=20"
+      exit 1
+
+  release-pipeline:
+    description: Alias for release
+    cmd: lets release
+
+  deploy-frontend:
+    description: Build frontend + deploy to GCS static hosting
+    cmd: |
+      cd .. && \
+      VITE_LUMEN_SERVER_URL=$(gcloud run services describe lumen-pipeline \
+        --project=lumen-pipeline --region=us-central1 \
+        --format='value(status.url)') \
+      VITE_LUMEN_API_KEY=$(gcloud secrets versions access latest \
+        --secret=lumen-api-key --project=lumen-pipeline) \
+      npm run build && \
+      gcloud storage rsync dist/ "gs://dots-frontend-lumen-pipeline" -r \
+        --delete-unmatched-destination-objects \
+        --cache-control="public, max-age=300" && \
+      echo "✓ Frontend deployed to: https://storage.googleapis.com/dots-frontend-lumen-pipeline/index.html"
+
+  deploy-firebase:
+    description: Build frontend + deploy to Firebase Hosting (embers.camp)
+    cmd: |
+      cd .. && \
+      VITE_LUMEN_SERVER_URL=$(gcloud run services describe lumen-pipeline \
+        --project=lumen-pipeline --region=us-central1 \
+        --format='value(status.url)') \
+      VITE_LUMEN_API_KEY=$(gcloud secrets versions access latest \
+        --secret=lumen-api-key --project=lumen-pipeline) \
+      npm run build && \
+      firebase deploy --only hosting:embers-camp --project=lumen-pipeline && \
+      echo "✓ Frontend deployed to:" && \
+      echo "  https://embers-camp.web.app" && \
+      echo "  https://embers.camp" && \
+      echo "  https://embers.camp/about  (report)"
+
+  release-all:
+    description: Full release — backend + frontend + health check
+    cmd: |
+      lets release && lets deploy-frontend
+

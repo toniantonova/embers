@@ -1,0 +1,21 @@
+# Heavy ML wheels — installed as a separate Docker layer.
+#
+# These packages account for ~2GB of downloaded wheels (PyTorch + CUDA,
+# torchvision, diffusers, transformers). By pinning them here and
+# COPYing this file before pyproject.toml in Dockerfile.base, Docker
+# can cache this layer independently. Edits to lightweight deps in
+# pyproject.toml won't trigger a ~15-minute re-download of ML wheels.
+#
+# IMPORTANT: Versions must match uv.lock exactly. If Layer 1 installs
+# a different version than uv.lock expects, Layer 2's `uv sync` will
+# either downgrade (wasting the heavy install) or conflict.
+#
+# To update: bump versions here AND in pyproject.toml, then run
+# `uv lock` to regenerate uv.lock.
+
+torch==2.8.0
+torchvision==0.23.0
+diffusers==0.36.0
+transformers==5.2.0
+accelerate==1.12.0
+safetensors==0.7.0

@@ -1,0 +1,145 @@
+[project]
+name = "lumen-server"
+version = "0.1.0"
+description = "Speech-to-3D point cloud generation server"
+requires-python = ">=3.13"
+dependencies = [
+    # Web framework
+    "fastapi>=0.129",
+    "uvicorn[standard]>=0.41",
+
+    # Data validation + config
+    "pydantic>=2.12",
+    "pydantic-settings>=2.13",
+
+    # ML runtime
+    "torch>=2.8,<2.9",
+    "diffusers>=0.33",
+    "accelerate>=1.7",
+    "transformers>=4.52",
+    "safetensors>=0.5",
+    "sentencepiece>=0.2",
+    "protobuf>=5.29",
+
+    # Numeric / geometry
+    "numpy>=2.4",
+    "trimesh>=4.11",
+    "scipy>=1.17",
+
+    # PartCrafter inference deps (vendored, not pip-installable)
+    "einops>=0.8",
+    "omegaconf>=2.3",
+    "jaxtyping>=0.2",
+    "typeguard>=4.3",
+    "peft>=0.14",
+    "colormaps>=0.4",
+    "opencv-python>=4.10",
+    "scikit-image>=0.24",
+    "scikit-learn>=1.5",
+    "huggingface-hub>=0.30",
+    "torch-cluster>=1.6.3,<1.7",   # Pinned: must match torch + CUDA version
+    "torchvision>=0.23,<0.24",     # Pinned: must match torch 2.8 + CUDA 12.8
+
+    # Image
+    "Pillow>=12.1",
+
+    # Infrastructure
+    "google-cloud-storage>=2.18",
+    "cachetools>=7.0",
+
+    # Observability
+    "structlog>=25.4",
+
+    # Rate limiting
+    "slowapi>=0.1.9",
+
+    # NLP (cache key normalization)
+    "nltk>=3.9",
+
+    # Observability
+    "prometheus-client>=0.21",
+    "opentelemetry-api>=1.29",
+    "opentelemetry-sdk>=1.29",
+    "opentelemetry-exporter-gcp-trace>=1.9",
+
+    # Headless rendering (fallback pipeline)
+    "pyrender>=0.1.45",
+    "PyOpenGL>=3.1",
+
+    # Fallback pipeline: Hunyuan3D + Grounded SAM2
+    # These are GitHub-only packages (not on PyPI). Install via:
+    #   uv pip install "hy3dgen @ git+https://github.com/Tencent/Hunyuan3D-2.git"
+    #   uv pip install "groundingdino-py @ git+https://github.com/IDEA-Research/GroundingDINO.git"
+    #   uv pip install "sam2 @ git+https://github.com/facebookresearch/sam2.git"
+    # They must be added to the Dockerfile (not pyproject.toml) because they
+    # require git+https:// URLs, which uv/pip resolves differently than PyPI.
+    # See Dockerfile.base for the actual install commands.
+]
+
+[project.optional-dependencies]
+dev = [
+    # Core test runner
+    "pytest>=9.0",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "pytest-xdist>=3.5",           # Parallel test execution (pytest -n auto)
+    "httpx>=0.28",
+
+    # Pydantic-aware test data generation
+    "polyfactory>=3.2",            # Auto-generate valid instances from Pydantic models
+
+    # Declarative assertions + snapshot testing
+    "dirty-equals>=0.11",          # e.g. assert x == IsPositiveInt
+    "inline-snapshot>=0.23",       # Inline snapshot() values in source code
+
+    # HTTP mocking (transport-layer, no Docker)
+    "respx>=0.22",                 # Mock httpx requests in-process
+
+    # Property-based testing
+    "hypothesis>=6.130",           # Invariant testing for encoders, samplers, cache keys
+
+    # Linting + type checking
+    "ruff>=0.15",
+    "mypy>=1.19",
+]
+ml = [
+    "diffusers>=0.36",
+    "transformers>=5.2",
+    "accelerate>=1.12",
+    "safetensors>=0.5",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "TCH"]
+ignore = [
+    "B008",   # Depends() in argument defaults is idiomatic FastAPI
+    "TC002",  # PIL.Image imports are used at runtime, not just for type-checking
+    "B905",   # zip() strict= is noisy; lengths are guaranteed by construction
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["N806"]  # Allow uppercase variable names (e.g. MockPipeline) in tests
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_return_any = true
+
+[[tool.mypy.overrides]]
+module = "google.cloud.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.uv]
+extra-build-dependencies = { torch-cluster = ["torch"] }
+
+[build-system]
+requires = ["setuptools>=70.0"]
+build-backend = "setuptools.build_meta"
