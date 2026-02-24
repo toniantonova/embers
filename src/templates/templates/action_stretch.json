@@ -1,0 +1,69 @@
+{
+    "template_id": "action_stretch",
+    "anchor_verbs": [
+        "stretch",
+        "extend",
+        "reach",
+        "yawn"
+    ],
+    "verbnet_class": "body_internal_motion-49.1",
+    "thematic_roles": {
+        "agent": "subject"
+    },
+    "description": "Stretching along primary axis with limb extension",
+    "whole_body": {
+        "primitive": "stretch_along_axis",
+        "params": {
+            "axis": [
+                0,
+                1,
+                0
+            ],
+            "scale_factor": 1.3,
+            "frequency": "{{speed * 0.5}}"
+        }
+    },
+    "part_rules": [
+        {
+            "match": "*_arm OR arm* OR *wing* OR *_leg OR leg*",
+            "primitive": "stretch_along_axis",
+            "params": {
+                "axis": [
+                    0,
+                    1,
+                    0
+                ],
+                "scale_factor": 1.5,
+                "frequency": "{{speed * 0.3}}"
+            },
+            "attachment_behavior": "gradient"
+        }
+    ],
+    "defaults": {
+        "speed": 0.6,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.2
+            },
+            "quickly": {
+                "speed": 1.5
+            },
+            "furiously": {
+                "speed": 2.0,
+                "amplitude_scale": 1.5
+            },
+            "gracefully": {
+                "speed": 0.3,
+                "amplitude_scale": 0.8
+            },
+            "gently": {
+                "speed": 0.2,
+                "amplitude_scale": 0.5
+            },
+            "wildly": {
+                "speed": 2.0,
+                "amplitude_scale": 2.0
+            }
+        }
+    }
+}

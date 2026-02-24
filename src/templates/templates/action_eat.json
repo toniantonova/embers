@@ -1,0 +1,88 @@
+{
+    "template_id": "action_eat",
+    "anchor_verbs": [
+        "eat",
+        "lick",
+        "chew",
+        "bite",
+        "nibble"
+    ],
+    "verbnet_class": "eat-39.1",
+    "thematic_roles": {
+        "agent": "subject",
+        "patient": "object"
+    },
+    "description": "Mouth/head bobbing motion simulating eating",
+    "whole_body": {
+        "primitive": "oscillate_translate",
+        "params": {
+            "direction": [
+                0,
+                1,
+                0
+            ],
+            "amplitude": 0.005,
+            "frequency": 0.5,
+            "phase": 0
+        }
+    },
+    "part_rules": [
+        {
+            "match": "head OR mouth OR jaw OR beak OR snout OR muzzle",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    1,
+                    0,
+                    0
+                ],
+                "amplitude": 0.15,
+                "frequency": "{{speed * 3.0}}",
+                "phase": 0
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "tail*",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    1,
+                    0
+                ],
+                "amplitude": 0.08,
+                "frequency": "{{speed * 2.0}}",
+                "phase": 0
+            },
+            "attachment_behavior": "gradient"
+        }
+    ],
+    "defaults": {
+        "speed": 1.0,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.4
+            },
+            "quickly": {
+                "speed": 2.5
+            },
+            "furiously": {
+                "speed": 3.0,
+                "amplitude_scale": 1.8
+            },
+            "gracefully": {
+                "speed": 0.5,
+                "amplitude_scale": 0.5
+            },
+            "gently": {
+                "speed": 0.4,
+                "amplitude_scale": 0.4
+            },
+            "wildly": {
+                "speed": 3.0,
+                "amplitude_scale": 2.0
+            }
+        }
+    }
+}

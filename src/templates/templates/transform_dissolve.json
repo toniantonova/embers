@@ -1,0 +1,52 @@
+{
+    "template_id": "transform_dissolve",
+    "anchor_verbs": [
+        "dissolve",
+        "fade",
+        "vanish",
+        "disappear",
+        "evaporate"
+    ],
+    "verbnet_class": "disappearance-48.2",
+    "thematic_roles": {
+        "patient": "subject"
+    },
+    "description": "Gradual dissolution via brownian scatter",
+    "whole_body": {
+        "primitive": "brownian_scatter",
+        "params": {
+            "diffusion": 3.0,
+            "seed": 42.0
+        },
+        "duration": 3.0
+    },
+    "part_rules": [],
+    "defaults": {
+        "speed": 1.0,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.3,
+                "amplitude_scale": 0.5
+            },
+            "quickly": {
+                "speed": 2.5
+            },
+            "furiously": {
+                "speed": 3.0,
+                "amplitude_scale": 2.0
+            },
+            "gracefully": {
+                "speed": 0.4,
+                "amplitude_scale": 0.6
+            },
+            "gently": {
+                "speed": 0.3,
+                "amplitude_scale": 0.3
+            },
+            "wildly": {
+                "speed": 2.5,
+                "amplitude_scale": 2.5
+            }
+        }
+    }
+}

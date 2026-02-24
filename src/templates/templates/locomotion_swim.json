@@ -1,0 +1,98 @@
+{
+    "template_id": "locomotion_swim",
+    "anchor_verbs": [
+        "swim",
+        "dive",
+        "paddle",
+        "wade"
+    ],
+    "verbnet_class": "run-51.3.2",
+    "thematic_roles": {
+        "agent": "subject",
+        "path": "preposition_object"
+    },
+    "description": "Swimming motion with tail/fin oscillation and body undulation",
+    "whole_body": {
+        "primitive": "laminar_flow",
+        "params": {
+            "direction": [
+                0,
+                0,
+                1
+            ],
+            "speed": "{{speed * 0.3}}"
+        }
+    },
+    "part_rules": [
+        {
+            "match": "tail* OR *_fin",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    1,
+                    0
+                ],
+                "amplitude": 0.3,
+                "frequency": "{{speed * 1.5}}",
+                "phase": "{{index * 0.25}}"
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "*pectoral* OR *flipper*",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    1,
+                    0,
+                    0
+                ],
+                "amplitude": 0.15,
+                "frequency": "{{speed * 1.0}}",
+                "phase": "{{index * 0.5}}"
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "head",
+            "primitive": "oscillate_translate",
+            "params": {
+                "direction": [
+                    0,
+                    0,
+                    1
+                ],
+                "amplitude": 0.02,
+                "frequency": "{{speed * 1.5}}",
+                "phase": 0
+            }
+        }
+    ],
+    "defaults": {
+        "speed": 0.8,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.3
+            },
+            "quickly": {
+                "speed": 2.0
+            },
+            "furiously": {
+                "speed": 2.5,
+                "amplitude_scale": 1.6
+            },
+            "gracefully": {
+                "speed": 0.5,
+                "amplitude_scale": 0.5
+            },
+            "gently": {
+                "speed": 0.4
+            },
+            "wildly": {
+                "speed": 2.2,
+                "amplitude_scale": 1.8
+            }
+        }
+    }
+}

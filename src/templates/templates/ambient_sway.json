@@ -1,0 +1,86 @@
+{
+    "template_id": "ambient_sway",
+    "anchor_verbs": [
+        "sway",
+        "rock",
+        "rustle",
+        "breeze"
+    ],
+    "verbnet_class": "modes_of_being_with_motion-47.3",
+    "thematic_roles": {
+        "theme": "subject"
+    },
+    "description": "Gentle swaying with wave propagation through body",
+    "whole_body": {
+        "primitive": "oscillate_translate",
+        "params": {
+            "direction": [
+                1,
+                0,
+                0
+            ],
+            "amplitude": 0.06,
+            "frequency": "{{speed * 0.4}}",
+            "phase": 0
+        }
+    },
+    "part_rules": [
+        {
+            "match": "branch* OR canopy OR leaf* OR leaves",
+            "primitive": "wave_propagate",
+            "params": {
+                "direction": [
+                    0,
+                    1,
+                    0
+                ],
+                "wavelength": 3.0,
+                "amplitude": 0.08,
+                "speed": "{{speed * 0.5}}"
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "*wing* OR *fin* OR tail*",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    0,
+                    1
+                ],
+                "amplitude": 0.1,
+                "frequency": "{{speed * 0.6}}",
+                "phase": "{{index * 0.2}}"
+            },
+            "attachment_behavior": "gradient"
+        }
+    ],
+    "defaults": {
+        "speed": 0.5,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.2
+            },
+            "quickly": {
+                "speed": 1.5
+            },
+            "furiously": {
+                "speed": 2.0,
+                "amplitude_scale": 1.8
+            },
+            "gracefully": {
+                "speed": 0.3,
+                "amplitude_scale": 0.5
+            },
+            "gently": {
+                "speed": 0.2,
+                "amplitude_scale": 0.3
+            },
+            "wildly": {
+                "speed": 2.0,
+                "amplitude_scale": 2.5
+            }
+        }
+    }
+}

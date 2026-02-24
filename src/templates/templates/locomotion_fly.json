@@ -1,0 +1,103 @@
+{
+    "template_id": "locomotion_fly",
+    "anchor_verbs": [
+        "fly",
+        "soar",
+        "glide",
+        "flutter",
+        "hover"
+    ],
+    "verbnet_class": "run-51.3.2",
+    "thematic_roles": {
+        "agent": "subject",
+        "path": "preposition_object"
+    },
+    "description": "Flying motion with wing flapping and gentle body bob",
+    "whole_body": {
+        "primitive": "oscillate_translate",
+        "params": {
+            "direction": [
+                0,
+                1,
+                0
+            ],
+            "amplitude": 0.04,
+            "frequency": "{{speed * 0.5}}",
+            "phase": 0
+        }
+    },
+    "part_rules": [
+        {
+            "match": "*wing* OR *flipper*",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    1,
+                    0,
+                    0
+                ],
+                "amplitude": 0.4,
+                "frequency": "{{speed * 2.0}}",
+                "phase": "{{index * 0.0}}"
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "tail* OR tail_fin",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    1,
+                    0
+                ],
+                "amplitude": 0.1,
+                "frequency": "{{speed * 1.0}}",
+                "phase": 0.25
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "head",
+            "primitive": "oscillate_translate",
+            "params": {
+                "direction": [
+                    0,
+                    0,
+                    1
+                ],
+                "amplitude": 0.01,
+                "frequency": "{{speed * 0.5}}",
+                "phase": 0
+            }
+        }
+    ],
+    "defaults": {
+        "speed": 1.2,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.4,
+                "amplitude_scale": 0.5
+            },
+            "quickly": {
+                "speed": 2.5
+            },
+            "furiously": {
+                "speed": 3.0,
+                "amplitude_scale": 1.5
+            },
+            "gracefully": {
+                "speed": 0.6,
+                "amplitude_scale": 0.7
+            },
+            "gently": {
+                "speed": 0.5,
+                "amplitude_scale": 0.4
+            },
+            "wildly": {
+                "speed": 2.5,
+                "amplitude_scale": 2.0
+            }
+        }
+    }
+}

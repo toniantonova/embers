@@ -1,0 +1,90 @@
+{
+    "template_id": "locomotion_hop",
+    "anchor_verbs": [
+        "hop",
+        "bounce",
+        "skip",
+        "spring",
+        "bound",
+        "prance"
+    ],
+    "verbnet_class": "run-51.3.2",
+    "thematic_roles": {
+        "agent": "subject",
+        "path": "preposition_object"
+    },
+    "description": "Repeated bouncing with vertical arc and spring settle on landing",
+    "whole_body": {
+        "primitive": "oscillate_translate",
+        "params": {
+            "direction": [
+                0,
+                1,
+                0
+            ],
+            "amplitude": 0.15,
+            "frequency": "{{speed * 1.5}}",
+            "phase": 0
+        }
+    },
+    "part_rules": [
+        {
+            "match": "*_leg OR *_foot OR leg*",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    1,
+                    0,
+                    0
+                ],
+                "amplitude": 0.12,
+                "frequency": "{{speed * 1.5}}",
+                "phase": 0
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "tail*",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    1,
+                    0
+                ],
+                "amplitude": 0.1,
+                "frequency": "{{speed * 1.5}}",
+                "phase": 0.5
+            },
+            "attachment_behavior": "gradient"
+        }
+    ],
+    "defaults": {
+        "speed": 1.0,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.4,
+                "amplitude_scale": 0.6
+            },
+            "quickly": {
+                "speed": 2.5
+            },
+            "furiously": {
+                "speed": 3.0,
+                "amplitude_scale": 1.8
+            },
+            "gracefully": {
+                "speed": 0.6,
+                "amplitude_scale": 0.5
+            },
+            "gently": {
+                "speed": 0.5,
+                "amplitude_scale": 0.4
+            },
+            "wildly": {
+                "speed": 2.5,
+                "amplitude_scale": 2.0
+            }
+        }
+    }
+}

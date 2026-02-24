@@ -1,0 +1,120 @@
+{
+    "template_id": "locomotion_quadruped",
+    "anchor_verbs": [
+        "run",
+        "gallop",
+        "trot",
+        "sprint",
+        "dash",
+        "scurry"
+    ],
+    "verbnet_class": "run-51.3.2",
+    "thematic_roles": {
+        "agent": "subject",
+        "theme": "subject",
+        "path": "preposition_object"
+    },
+    "description": "Four-legged running gait with body bounce and alternating leg phases",
+    "whole_body": {
+        "primitive": "oscillate_translate",
+        "params": {
+            "direction": [
+                0,
+                1,
+                0
+            ],
+            "amplitude": 0.03,
+            "frequency": "{{speed * 2.0}}",
+            "phase": 0
+        }
+    },
+    "part_rules": [
+        {
+            "match": "front_*_leg OR forelimb* OR front_*_paw",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    0,
+                    1
+                ],
+                "amplitude": 0.25,
+                "frequency": "{{speed * 1.0}}",
+                "phase": "{{index * 0.5}}"
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "back_*_leg OR hindlimb* OR rear_*_leg OR back_*_paw",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    0,
+                    1
+                ],
+                "amplitude": 0.20,
+                "frequency": "{{speed * 1.0}}",
+                "phase": "{{index * 0.5 + 0.25}}"
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "head",
+            "primitive": "oscillate_translate",
+            "params": {
+                "direction": [
+                    0,
+                    1,
+                    0
+                ],
+                "amplitude": 0.015,
+                "frequency": "{{speed * 2.0}}",
+                "phase": 0.1
+            }
+        },
+        {
+            "match": "tail*",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    1,
+                    0
+                ],
+                "amplitude": 0.15,
+                "frequency": "{{speed * 1.5}}",
+                "phase": 0
+            },
+            "attachment_behavior": "gradient"
+        }
+    ],
+    "defaults": {
+        "speed": 1.0,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.3,
+                "amplitude_scale": 0.7
+            },
+            "quickly": {
+                "speed": 2.0
+            },
+            "furiously": {
+                "speed": 2.5,
+                "amplitude_scale": 1.8
+            },
+            "gracefully": {
+                "speed": 0.7,
+                "amplitude_scale": 0.6
+            },
+            "gently": {
+                "speed": 0.5,
+                "amplitude_scale": 0.5
+            },
+            "wildly": {
+                "speed": 2.2,
+                "amplitude_scale": 2.0
+            }
+        }
+    }
+}

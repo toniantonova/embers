@@ -1,0 +1,116 @@
+{
+    "template_id": "emotion_happy",
+    "anchor_verbs": [
+        "dance",
+        "celebrate",
+        "rejoice",
+        "cheer",
+        "party"
+    ],
+    "verbnet_class": "nonverbal_expression-40.2",
+    "thematic_roles": {
+        "agent": "subject"
+    },
+    "description": "Happy/celebratory motion with bouncing and spiraling",
+    "whole_body": {
+        "primitive": "oscillate_translate",
+        "params": {
+            "direction": [
+                0,
+                1,
+                0
+            ],
+            "amplitude": 0.12,
+            "frequency": "{{speed * 2.5}}",
+            "phase": 0
+        }
+    },
+    "part_rules": [
+        {
+            "match": "*_arm OR arm* OR *wing* OR *_hand",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    0,
+                    1
+                ],
+                "amplitude": 0.3,
+                "frequency": "{{speed * 2.0}}",
+                "phase": "{{index * 0.25}}"
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "head",
+            "primitive": "oscillate_translate",
+            "params": {
+                "direction": [
+                    1,
+                    0,
+                    0
+                ],
+                "amplitude": 0.05,
+                "frequency": "{{speed * 2.5}}",
+                "phase": 0.1
+            }
+        },
+        {
+            "match": "tail*",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    1,
+                    0
+                ],
+                "amplitude": 0.25,
+                "frequency": "{{speed * 3.0}}",
+                "phase": 0
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "*_leg OR leg* OR *_foot",
+            "primitive": "oscillate_translate",
+            "params": {
+                "direction": [
+                    0,
+                    1,
+                    0
+                ],
+                "amplitude": 0.08,
+                "frequency": "{{speed * 2.5}}",
+                "phase": "{{index * 0.5}}"
+            },
+            "attachment_behavior": "gradient"
+        }
+    ],
+    "defaults": {
+        "speed": 1.2,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.5
+            },
+            "quickly": {
+                "speed": 2.5
+            },
+            "furiously": {
+                "speed": 3.0,
+                "amplitude_scale": 2.0
+            },
+            "gracefully": {
+                "speed": 0.7,
+                "amplitude_scale": 0.6
+            },
+            "gently": {
+                "speed": 0.5,
+                "amplitude_scale": 0.4
+            },
+            "wildly": {
+                "speed": 3.0,
+                "amplitude_scale": 2.5
+            }
+        }
+    }
+}

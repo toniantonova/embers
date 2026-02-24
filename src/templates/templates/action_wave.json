@@ -1,0 +1,87 @@
+{
+    "template_id": "action_wave",
+    "anchor_verbs": [
+        "wave",
+        "beckon",
+        "gesture",
+        "signal"
+    ],
+    "verbnet_class": "body_internal_motion-49.1",
+    "thematic_roles": {
+        "agent": "subject",
+        "recipient": "preposition_object"
+    },
+    "description": "Waving motion with one limb/appendage",
+    "whole_body": {
+        "primitive": "oscillate_translate",
+        "params": {
+            "direction": [
+                0,
+                1,
+                0
+            ],
+            "amplitude": 0.005,
+            "frequency": 0.3,
+            "phase": 0
+        }
+    },
+    "part_rules": [
+        {
+            "match": "*_arm OR arm* OR *wing* OR *_paw OR *_hand",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    0,
+                    1
+                ],
+                "amplitude": 0.3,
+                "frequency": "{{speed * 2.0}}",
+                "phase": 0
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "tail*",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    1,
+                    0
+                ],
+                "amplitude": 0.12,
+                "frequency": "{{speed * 3.0}}",
+                "phase": 0
+            },
+            "attachment_behavior": "gradient"
+        }
+    ],
+    "defaults": {
+        "speed": 1.0,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.4
+            },
+            "quickly": {
+                "speed": 2.5
+            },
+            "furiously": {
+                "speed": 3.0,
+                "amplitude_scale": 1.5
+            },
+            "gracefully": {
+                "speed": 0.6,
+                "amplitude_scale": 0.6
+            },
+            "gently": {
+                "speed": 0.5,
+                "amplitude_scale": 0.4
+            },
+            "wildly": {
+                "speed": 3.0,
+                "amplitude_scale": 2.0
+            }
+        }
+    }
+}

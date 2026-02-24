@@ -1,0 +1,86 @@
+{
+    "template_id": "action_shake",
+    "anchor_verbs": [
+        "shake",
+        "tremble",
+        "shiver",
+        "vibrate",
+        "quake"
+    ],
+    "verbnet_class": "modes_of_being_with_motion-47.3",
+    "thematic_roles": {
+        "agent": "subject"
+    },
+    "description": "High-frequency, low-amplitude shaking of the whole body",
+    "whole_body": {
+        "primitive": "oscillate_translate",
+        "params": {
+            "direction": [
+                1,
+                0,
+                0
+            ],
+            "amplitude": "{{0.08 * speed}}",
+            "frequency": "{{speed * 8.0}}",
+            "phase": 0
+        }
+    },
+    "part_rules": [
+        {
+            "match": "head",
+            "primitive": "oscillate_translate",
+            "params": {
+                "direction": [
+                    1,
+                    0,
+                    0
+                ],
+                "amplitude": "{{0.12 * speed}}",
+                "frequency": "{{speed * 10.0}}",
+                "phase": 0.1
+            }
+        },
+        {
+            "match": "tail*",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    1,
+                    0
+                ],
+                "amplitude": "{{0.2 * speed}}",
+                "frequency": "{{speed * 6.0}}",
+                "phase": 0.3
+            },
+            "attachment_behavior": "gradient"
+        }
+    ],
+    "defaults": {
+        "speed": 1.0,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.4
+            },
+            "quickly": {
+                "speed": 2.0
+            },
+            "furiously": {
+                "speed": 3.0,
+                "amplitude_scale": 2.0
+            },
+            "gracefully": {
+                "speed": 0.5,
+                "amplitude_scale": 0.4
+            },
+            "gently": {
+                "speed": 0.3,
+                "amplitude_scale": 0.3
+            },
+            "wildly": {
+                "speed": 3.0,
+                "amplitude_scale": 2.5
+            }
+        }
+    }
+}

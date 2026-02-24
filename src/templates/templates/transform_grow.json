@@ -1,0 +1,55 @@
+{
+    "template_id": "transform_grow",
+    "anchor_verbs": [
+        "grow",
+        "expand",
+        "inflate",
+        "swell",
+        "enlarge"
+    ],
+    "verbnet_class": "calibratable_cos-45.6.1",
+    "thematic_roles": {
+        "patient": "subject"
+    },
+    "description": "Uniform expansion outward along all axes",
+    "whole_body": {
+        "primitive": "stretch_along_axis",
+        "params": {
+            "axis": [
+                0,
+                1,
+                0
+            ],
+            "scale_factor": "{{1.0 + speed * 0.8}}",
+            "frequency": "{{speed * 0.3}}"
+        }
+    },
+    "part_rules": [],
+    "defaults": {
+        "speed": 1.0,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.3
+            },
+            "quickly": {
+                "speed": 2.5
+            },
+            "furiously": {
+                "speed": 3.0,
+                "amplitude_scale": 2.0
+            },
+            "gracefully": {
+                "speed": 0.4,
+                "amplitude_scale": 0.6
+            },
+            "gently": {
+                "speed": 0.3,
+                "amplitude_scale": 0.4
+            },
+            "wildly": {
+                "speed": 2.5,
+                "amplitude_scale": 2.5
+            }
+        }
+    }
+}

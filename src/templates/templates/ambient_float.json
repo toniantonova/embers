@@ -1,0 +1,66 @@
+{
+    "template_id": "ambient_float",
+    "anchor_verbs": [
+        "float",
+        "drift",
+        "levitate",
+        "suspend"
+    ],
+    "verbnet_class": "assuming_position-50",
+    "thematic_roles": {
+        "agent": "subject"
+    },
+    "description": "Gentle floating with curl noise displacement",
+    "whole_body": {
+        "primitive": "curl_noise_flow",
+        "params": {
+            "scale": 0.8,
+            "speed": "{{speed * 0.3}}",
+            "amplitude": 0.15
+        }
+    },
+    "part_rules": [
+        {
+            "match": "*wing* OR *fin* OR *flipper*",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    1,
+                    0,
+                    0
+                ],
+                "amplitude": 0.08,
+                "frequency": "{{speed * 0.5}}",
+                "phase": "{{index * 0.25}}"
+            },
+            "attachment_behavior": "gradient"
+        }
+    ],
+    "defaults": {
+        "speed": 0.6,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.2
+            },
+            "quickly": {
+                "speed": 1.5
+            },
+            "furiously": {
+                "speed": 2.0,
+                "amplitude_scale": 1.5
+            },
+            "gracefully": {
+                "speed": 0.3,
+                "amplitude_scale": 0.5
+            },
+            "gently": {
+                "speed": 0.2,
+                "amplitude_scale": 0.3
+            },
+            "wildly": {
+                "speed": 1.8,
+                "amplitude_scale": 2.0
+            }
+        }
+    }
+}

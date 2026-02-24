@@ -1,0 +1,71 @@
+{
+    "template_id": "action_nod",
+    "anchor_verbs": [
+        "nod",
+        "bob",
+        "dip",
+        "bow"
+    ],
+    "verbnet_class": "body_internal_motion-49.1",
+    "thematic_roles": {
+        "agent": "subject"
+    },
+    "description": "Head nodding/bowing motion",
+    "whole_body": {
+        "primitive": "oscillate_translate",
+        "params": {
+            "direction": [
+                0,
+                1,
+                0
+            ],
+            "amplitude": 0.003,
+            "frequency": 0.2,
+            "phase": 0
+        }
+    },
+    "part_rules": [
+        {
+            "match": "head OR face OR skull",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    1,
+                    0,
+                    0
+                ],
+                "amplitude": 0.2,
+                "frequency": "{{speed * 1.5}}",
+                "phase": 0
+            },
+            "attachment_behavior": "gradient"
+        }
+    ],
+    "defaults": {
+        "speed": 0.8,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.3
+            },
+            "quickly": {
+                "speed": 2.0
+            },
+            "furiously": {
+                "speed": 3.0,
+                "amplitude_scale": 1.5
+            },
+            "gracefully": {
+                "speed": 0.5,
+                "amplitude_scale": 0.6
+            },
+            "gently": {
+                "speed": 0.3,
+                "amplitude_scale": 0.4
+            },
+            "wildly": {
+                "speed": 2.5,
+                "amplitude_scale": 2.0
+            }
+        }
+    }
+}

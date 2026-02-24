@@ -1,0 +1,91 @@
+{
+    "template_id": "action_speak",
+    "anchor_verbs": [
+        "speak",
+        "talk",
+        "say",
+        "tell",
+        "whisper",
+        "shout"
+    ],
+    "verbnet_class": "say-37.7",
+    "thematic_roles": {
+        "agent": "subject",
+        "topic": "object"
+    },
+    "description": "Speaking motion — mouth/head micro-oscillation with subtle body movement",
+    "whole_body": {
+        "primitive": "oscillate_translate",
+        "params": {
+            "direction": [
+                0,
+                1,
+                0
+            ],
+            "amplitude": 0.008,
+            "frequency": 0.4,
+            "phase": 0
+        }
+    },
+    "part_rules": [
+        {
+            "match": "head OR face OR mouth OR jaw OR beak OR snout",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    1,
+                    0,
+                    0
+                ],
+                "amplitude": "{{0.06 * speed}}",
+                "frequency": "{{speed * 4.0}}",
+                "phase": 0
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "*_arm OR arm* OR *_hand",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    0,
+                    1
+                ],
+                "amplitude": 0.05,
+                "frequency": "{{speed * 1.5}}",
+                "phase": "{{index * 0.3}}"
+            },
+            "attachment_behavior": "gradient"
+        }
+    ],
+    "defaults": {
+        "speed": 1.0,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.5,
+                "amplitude_scale": 0.5
+            },
+            "quickly": {
+                "speed": 2.0,
+                "amplitude_scale": 1.3
+            },
+            "furiously": {
+                "speed": 2.5,
+                "amplitude_scale": 2.0
+            },
+            "gracefully": {
+                "speed": 0.6,
+                "amplitude_scale": 0.5
+            },
+            "gently": {
+                "speed": 0.4,
+                "amplitude_scale": 0.3
+            },
+            "wildly": {
+                "speed": 2.5,
+                "amplitude_scale": 2.0
+            }
+        }
+    }
+}

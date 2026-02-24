@@ -1,0 +1,95 @@
+{
+    "template_id": "ambient_idle",
+    "anchor_verbs": [
+        "idle",
+        "rest",
+        "stand",
+        "wait",
+        "pause",
+        "breathe"
+    ],
+    "verbnet_class": "exist-47.1",
+    "thematic_roles": {
+        "theme": "subject"
+    },
+    "description": "Default idle state — subtle breathing oscillation + micro curl noise. Plays when no other verb is active.",
+    "whole_body": {
+        "primitive": "curl_noise_flow",
+        "params": {
+            "scale": 1.2,
+            "speed": 0.08,
+            "amplitude": 0.02
+        }
+    },
+    "part_rules": [
+        {
+            "match": "head",
+            "primitive": "oscillate_translate",
+            "params": {
+                "direction": [
+                    0,
+                    1,
+                    0
+                ],
+                "amplitude": 0.004,
+                "frequency": 0.3,
+                "phase": 0
+            }
+        },
+        {
+            "match": "tail*",
+            "primitive": "oscillate_bend",
+            "params": {
+                "axis": [
+                    0,
+                    1,
+                    0
+                ],
+                "amplitude": 0.03,
+                "frequency": 0.2,
+                "phase": 0
+            },
+            "attachment_behavior": "gradient"
+        },
+        {
+            "match": "body OR hull OR torso",
+            "primitive": "oscillate_translate",
+            "params": {
+                "direction": [
+                    0,
+                    1,
+                    0
+                ],
+                "amplitude": 0.006,
+                "frequency": 0.25,
+                "phase": 0
+            }
+        }
+    ],
+    "defaults": {
+        "speed": 0.5,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.2
+            },
+            "quickly": {
+                "speed": 1.0
+            },
+            "furiously": {
+                "speed": 1.5,
+                "amplitude_scale": 2.0
+            },
+            "gracefully": {
+                "speed": 0.3
+            },
+            "gently": {
+                "speed": 0.2,
+                "amplitude_scale": 0.3
+            },
+            "wildly": {
+                "speed": 1.5,
+                "amplitude_scale": 2.0
+            }
+        }
+    }
+}

@@ -1,0 +1,57 @@
+{
+    "template_id": "transform_explode",
+    "anchor_verbs": [
+        "explode",
+        "burst",
+        "detonate",
+        "erupt",
+        "blast"
+    ],
+    "verbnet_class": "break-45.1",
+    "thematic_roles": {
+        "patient": "subject"
+    },
+    "description": "Explosive radial burst outward from center",
+    "whole_body": {
+        "primitive": "radial_burst",
+        "params": {
+            "origin": [
+                0,
+                0,
+                0
+            ],
+            "strength": 3.0,
+            "decay": 2.0
+        },
+        "duration": 2.0
+    },
+    "part_rules": [],
+    "defaults": {
+        "speed": 1.0,
+        "adverb_map": {
+            "slowly": {
+                "speed": 0.3,
+                "amplitude_scale": 0.5
+            },
+            "quickly": {
+                "speed": 2.5
+            },
+            "furiously": {
+                "speed": 3.0,
+                "amplitude_scale": 2.5
+            },
+            "gracefully": {
+                "speed": 0.5,
+                "amplitude_scale": 0.6
+            },
+            "gently": {
+                "speed": 0.4,
+                "amplitude_scale": 0.3
+            },
+            "wildly": {
+                "speed": 3.0,
+                "amplitude_scale": 3.0
+            }
+        }
+    }
+}
