@@ -1,0 +1,1435 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #1a1a1a;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+canvas {
+  display: block;
+}
+
+/* UI Overlay */
+.ui-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  /* Let clicks pass through to canvas */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 2rem;
+  /* Account for mobile browser chrome (address bar, tab bar) */
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+
+/* ── TOP-RIGHT CONTROLS CONTAINER ────────────────────────────────────
+ * Groups the mode toggle and STT status badge in the top-right corner,
+ * immediately to the left of the gear button. Uses a higher z-index
+ * than the tuning panel (z-index: 999) so it stays visible when the
+ * settings sidebar slides open.
+ */
+.top-right-controls {
+  position: fixed;
+  top: 1rem;
+  right: calc(1rem + 40px + 0.75rem);
+  /* gear btn width + gap */
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+  /* Vertically center with the 40px gear button */
+  padding-top: 4px;
+}
+
+/* ── MODE TOGGLE (Simple / Complex) ──────────────────────────────────
+ * Minimal pill switch with sliding highlight behind the active label.
+ * Glassmorphism matches existing UI elements.
+ */
+.mode-toggle {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 3px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.3s ease;
+  overflow: hidden;
+}
+
+.mode-toggle:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.mode-toggle__label {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 16px;
+  transition: color 0.3s ease, background 0.3s ease;
+  line-height: 1;
+  z-index: 1;
+  position: relative;
+}
+
+/* Simple mode active (default) — left label highlighted */
+.mode-toggle__label--left {
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.mode-toggle__label--right {
+  color: rgba(255, 255, 255, 0.3);
+  background: transparent;
+}
+
+/* Complex mode active — right label highlighted with accent */
+.mode-toggle--complex .mode-toggle__label--left {
+  color: rgba(255, 255, 255, 0.3);
+  background: transparent;
+}
+
+.mode-toggle--complex .mode-toggle__label--right {
+  color: rgba(130, 200, 255, 0.95);
+  background: rgba(130, 200, 255, 0.12);
+}
+
+/* Hide the old thumb — replaced by label backgrounds */
+.mode-toggle__thumb {
+  display: none;
+}
+
+/* Mobile: slightly larger touch target */
+@media (max-width: 768px),
+(pointer: coarse) {
+  .mode-toggle {
+    padding: 4px;
+  }
+
+  .mode-toggle__label {
+    padding: 7px 14px;
+    font-size: 10px;
+  }
+
+  .top-right-controls {
+    right: calc(1rem + 48px + 0.5rem);
+    /* larger mobile gear btn */
+    padding-top: 7px;
+  }
+}
+
+.mic-button {
+  pointer-events: auto;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.6);
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  align-self: center;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.mic-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: scale(1.08);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.mic-button.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.15), 0 0 40px rgba(255, 255, 255, 0.06);
+}
+
+.mic-button .mic-icon {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  transition: opacity 0.3s ease;
+}
+
+.mic-button .mic-slash {
+  position: absolute;
+  width: 28px;
+  height: 2px;
+  background: currentColor;
+  transform: rotate(-45deg);
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.mic-button.active .mic-slash {
+  opacity: 0;
+}
+
+/* Mobile: larger touch target + clear browser chrome */
+@media (max-width: 768px),
+(pointer: coarse) {
+  .mic-button {
+    width: 56px;
+    height: 56px;
+    /* Extra bottom margin to clear mobile browser navigation bars
+       (Chrome tab bar, Safari toolbar). Combined with safe-area-inset
+       on the parent, this keeps the button fully tappable. */
+    margin-bottom: 3.5rem;
+  }
+
+  .mic-button .mic-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .stt-status {
+    margin-bottom: 1rem;
+  }
+}
+
+.mic-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 60, 60, 0.2);
+  border: 1px solid rgba(255, 60, 60, 0.4);
+  color: rgba(255, 255, 255, 0.85);
+  font-family: monospace;
+  font-size: 0.7rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  animation: tooltip-fade 0.3s ease;
+  pointer-events: none;
+}
+
+@keyframes tooltip-fade {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ── STT STATUS BADGE ─────────────────────────────────────────────────
+ * Lives inside .top-right-controls, directly below the mode toggle.
+ * Shows the Web Speech API recognition state so the user knows
+ * whether words are being captured without needing the console open.
+ */
+.stt-status {
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  animation: stt-fade-in 0.3s ease;
+}
+
+.stt-status__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.stt-status__label {
+  line-height: 1;
+}
+
+/* Color variants */
+.stt-status--listening .stt-status__dot {
+  background: #4ade80;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+  animation: stt-pulse 2s ease infinite;
+}
+
+.stt-status--restarting .stt-status__dot {
+  background: #fbbf24;
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.4);
+  animation: stt-pulse 1s ease infinite;
+}
+
+.stt-status--error .stt-status__dot {
+  background: #f87171;
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.5);
+}
+
+.stt-status--error {
+  border-color: rgba(248, 113, 113, 0.2);
+  color: rgba(248, 113, 113, 0.85);
+}
+
+.stt-status--unsupported .stt-status__dot {
+  background: #fbbf24;
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.4);
+}
+
+/* Loading state: pulsing dot while Moonshine model downloads */
+.stt-status--loading .stt-status__dot,
+.stt-status--loading-model .stt-status__dot {
+  background: #fbbf24;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+  animation: stt-loading-spin 1s linear infinite;
+}
+
+.stt-status--loading .stt-status__label,
+.stt-status--loading-model .stt-status__label {
+  color: rgba(251, 191, 36, 0.9);
+}
+
+@keyframes stt-loading-spin {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.stt-status--off .stt-status__dot {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── SERVER PROCESSING SPINNER ───────────────────────────────────────
+ * Tiny swirling arc shown next to the STT dot while the server is
+ * generating a shape and particles are settling into formation.
+ * Gray/white, matches the existing monochrome aesthetic.
+ */
+.server-spinner {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-top-color: rgba(255, 255, 255, 0.7);
+  animation: server-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes server-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * TIMEOUT FALLBACK NOTE
+ * ═══════════════════════════════════════════════════════════════════════ */
+.speech-fallback-note {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0.5rem 0 0;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * iOS DICTATION PROMPT — Modal shown when service-not-allowed fires
+ * ═══════════════════════════════════════════════════════════════════════
+ * Glassmorphism modal explaining how to enable Dictation in iOS Settings.
+ * Appears over the canvas with a semi-transparent backdrop.
+ */
+.dictation-prompt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  animation: dictation-overlay-in 0.3s ease;
+  pointer-events: auto;
+}
+
+.dictation-prompt {
+  background: rgba(20, 20, 28, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 1.5rem;
+  max-width: 340px;
+  width: 100%;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  animation: dictation-slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dictation-prompt__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.dictation-prompt__icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.dictation-prompt__title {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.dictation-prompt__body {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.dictation-prompt__steps {
+  list-style: none;
+  counter-reset: step;
+  padding: 0;
+  margin: 0 0 1.25rem;
+}
+
+.dictation-prompt__steps li {
+  counter-increment: step;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  line-height: 1.4;
+}
+
+.dictation-prompt__steps li:last-child {
+  border-bottom: none;
+}
+
+.dictation-prompt__steps li::before {
+  content: counter(step);
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dictation-prompt__steps li strong {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 500;
+}
+
+.dictation-prompt__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.dictation-prompt__btn {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 10px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.dictation-prompt__btn--retry {
+  background: rgba(255, 255, 255, 0.95);
+  color: #111;
+}
+
+.dictation-prompt__btn--retry:hover {
+  background: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+}
+
+.dictation-prompt__btn--dismiss {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dictation-prompt__btn--dismiss:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+@keyframes dictation-overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dictation-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes stt-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stt-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * ANALYSIS PANEL — Collapsible left sidebar for live diagnostics
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── TOGGLE BUTTON ───────────────────────────────────────────────────
+ * Fixed top-left, always visible. Mirrors .tuning-gear-btn on the right.
+ */
+.analysis-toggle-btn {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1000;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.analysis-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── SLIDE-IN PANEL ──────────────────────────────────────────────────
+ * 280px wide, slides in from the left edge. Uses translateX for
+ * GPU-accelerated animation. Glassmorphism matches TuningPanel.
+ */
+.analysis-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  z-index: 999;
+  background: rgba(10, 10, 15, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5);
+  color: white;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.analysis-panel.open {
+  transform: translateX(0);
+}
+
+/* ── HEADER ──────────────────────────────────────────────────────── */
+.analysis-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.analysis-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.analysis-close-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── SCROLLABLE CONTENT ──────────────────────────────────────────── */
+.analysis-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  pointer-events: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.analysis-panel-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.analysis-panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.analysis-panel-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * TUNING PANEL — Collapsible sidebar for real-time parameter tuning
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── GEAR BUTTON ──────────────────────────────────────────────────────
+ * Fixed top-right, always visible. Uses a subtle glassmorphism style
+ * that matches the existing debug-panel and mic-button aesthetics.
+ */
+.tuning-gear-btn {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 18px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.tuning-gear-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  transform: rotate(30deg);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── OVERLAY (click-to-close backdrop) ────────────────────────────────
+ * Semi-transparent backdrop that appears when panel is open.
+ * Clicking it closes the panel — a standard UX pattern for modals/drawers.
+ */
+.tuning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 998;
+  /* No background — just catches clicks */
+}
+
+/* ── SLIDE-IN PANEL ───────────────────────────────────────────────────
+ * 300px wide, slides in from the right edge. Uses translateX for
+ * GPU-accelerated animation (no layout thrash). Glassmorphism background
+ * with backdrop blur for the premium look.
+ */
+.tuning-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 100vh;
+  z-index: 999;
+  background: rgba(10, 10, 15, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  box-shadow: -4px 0 30px rgba(0, 0, 0, 0.5);
+}
+
+.tuning-panel.open {
+  transform: translateX(0);
+}
+
+/* ── PANEL HEADER ─────────────────────────────────────────────────── */
+.tuning-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.tuning-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.tuning-close-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── TAB BAR ──────────────────────────────────────────────────────── */
+/*
+ * Pill-toggle for switching between Visual and Audio tabs.
+ * Glass background matches the panel aesthetic. Active pill gets a
+ * brighter background with a subtle glow to clarify selection.
+ */
+.tuning-tab-bar {
+  display: flex;
+  gap: 2px;
+  padding: 6px 12px 8px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tuning-tab-pill {
+  flex: 1;
+  padding: 7px 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.4);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.tuning-tab-pill:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.tuning-tab-pill.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.04);
+}
+
+/* ── AUDIO REACTIVITY GRID ────────────────────────────────────────── */
+/*
+ * Compact 4-column grid: feature name | influence slider | smoothing slider | live value.
+ * Collapses 7 separate sections into one dense, scannable table.
+ */
+.tuning-audio-header {
+  display: grid;
+  grid-template-columns: 72px 1fr 1fr 40px;
+  gap: 6px;
+  align-items: center;
+  padding: 0 0 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 4px;
+}
+
+.tuning-audio-header-label {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tuning-audio-header-col {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+
+.tuning-audio-header-live {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 9px;
+  color: rgba(100, 220, 140, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: right;
+}
+
+.tuning-audio-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 1fr 40px;
+  gap: 6px;
+  align-items: center;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+  transition: background 0.15s ease;
+}
+
+.tuning-audio-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tuning-audio-row:last-child {
+  border-bottom: none;
+}
+
+.tuning-audio-feature-name {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Compact slider — thinner variant for the grid layout */
+.tuning-compact-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1px;
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+
+.tuning-compact-slider::-webkit-slider-runnable-track {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1px;
+}
+
+.tuning-compact-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  border: none;
+  margin-top: -4px;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.1s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.tuning-compact-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+  background: white;
+}
+
+.tuning-compact-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.tuning-compact-slider::-moz-range-track {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1px;
+  border: none;
+}
+
+.tuning-compact-slider:focus {
+  outline: none;
+}
+
+.tuning-audio-live-badge {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 9px;
+  color: rgba(100, 220, 140, 0.6);
+  text-align: right;
+  min-width: 32px;
+}
+
+/* ── PANEL CONTENT (scrollable) ───────────────────────────────────── */
+.tuning-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
+  /* Custom scrollbar for WebKit browsers */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.tuning-panel-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tuning-panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tuning-panel-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+/* ── SECTION ──────────────────────────────────────────────────────── */
+.tuning-section {
+  padding: 4px 16px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tuning-section:last-child {
+  border-bottom: none;
+}
+
+.tuning-section-title {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+  padding-top: 8px;
+}
+
+/* ── PARAMETER ROW ────────────────────────────────────────────────── */
+.tuning-row {
+  margin-bottom: 6px;
+}
+
+.tuning-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 2px;
+}
+
+.tuning-label {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: default;
+}
+
+
+
+.tuning-current-value {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.9);
+  min-width: 32px;
+  text-align: right;
+}
+
+
+
+/* ── SLIDER STYLING ───────────────────────────────────────────────────
+ * Custom range input styling. The default browser slider is ugly and
+ * inconsistent across browsers. This creates a clean, thin track with
+ * a small white thumb that matches the dark theme.
+ */
+.tuning-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+
+/* Track fill (WebKit) */
+.tuning-slider::-webkit-slider-runnable-track {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+}
+
+/* Thumb (WebKit) */
+.tuning-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  margin-top: -4.5px;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.1s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.tuning-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+  background: white;
+}
+
+/* Thumb (Firefox) */
+.tuning-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.tuning-slider::-moz-range-track {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  border: none;
+}
+
+.tuning-slider:focus {
+  outline: none;
+}
+
+/* ── SHAPE DROPDOWN ──────────────────────────────────────────────── */
+/*
+ * Custom-styled <select> for the morph target picker.
+ * Native <select> is used over a custom dropdown for accessibility
+ * and mobile support (native pickers work better on touch devices).
+ * We override the default browser appearance to match the dark panel.
+ */
+.tuning-select {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  padding: 6px 28px 6px 10px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  /* Custom arrow indicator (replaces browser default chevron) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.5)'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.tuning-select:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.tuning-select:focus {
+  border-color: rgba(100, 149, 237, 0.6);
+  box-shadow: 0 0 0 2px rgba(100, 149, 237, 0.15);
+}
+
+/* Style the dropdown options (limited browser support, but helps in Chrome) */
+.tuning-select option {
+  background: #2a2a2a;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 4px 8px;
+}
+
+/* ── SHAPE CONTROL ROW ───────────────────────────────────────────── */
+/*
+ * Layout for shape selector rows: label on left, dropdown on right.
+ * Uses the same spacing rhythm as slider rows for visual consistency.
+ */
+.tuning-shape-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.tuning-shape-row .tuning-label {
+  flex-shrink: 0;
+  min-width: 60px;
+}
+
+.tuning-shape-row .tuning-select {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Blend slider row — full-width with value on the right */
+.tuning-blend-row {
+  margin-top: 2px;
+}
+
+.tuning-blend-row .tuning-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+/* ── BUTTONS ──────────────────────────────────────────────────────── */
+.tuning-btn {
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tuning-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+.tuning-btn:active {
+  transform: scale(0.98);
+}
+
+.tuning-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.tuning-btn-reset {
+  border-color: rgba(255, 100, 100, 0.2);
+  color: rgba(255, 140, 140, 0.8);
+}
+
+.tuning-btn-reset:hover {
+  background: rgba(255, 100, 100, 0.1);
+  border-color: rgba(255, 100, 100, 0.35);
+  color: rgba(255, 180, 180, 1);
+}
+
+.tuning-btn-copy {
+  border-color: rgba(100, 180, 255, 0.2);
+  color: rgba(130, 190, 255, 0.8);
+}
+
+.tuning-btn-copy:hover {
+  background: rgba(100, 180, 255, 0.1);
+  border-color: rgba(100, 180, 255, 0.35);
+  color: rgba(160, 210, 255, 1);
+}
+
+.tuning-btn-idle {
+  border-color: rgba(100, 255, 200, 0.2);
+  color: rgba(130, 255, 210, 0.8);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.tuning-btn-idle:hover {
+  background: rgba(100, 255, 200, 0.1);
+  border-color: rgba(100, 255, 200, 0.4);
+  color: rgba(160, 255, 230, 1);
+  box-shadow: 0 0 12px rgba(100, 255, 200, 0.15);
+}
+
+/* ── PASTE CONFIG ─────────────────────────────────────────────────── */
+.tuning-paste-group {
+  margin-top: 4px;
+}
+
+.tuning-paste-input {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.75);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 10px;
+  resize: vertical;
+  min-height: 50px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.tuning-paste-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.tuning-paste-input:focus {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.tuning-btn-paste {
+  border-color: rgba(100, 220, 140, 0.2);
+  color: rgba(100, 220, 140, 0.8);
+}
+
+.tuning-btn-paste:hover:not(:disabled) {
+  background: rgba(100, 220, 140, 0.1);
+  border-color: rgba(100, 220, 140, 0.35);
+  color: rgba(140, 240, 170, 1);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   GHOST TITLE — Decorative cinematic text behind the canvas
+   ══════════════════════════════════════════════════════════════════════ */
+
+.ghost-title {
+  position: absolute;
+  top: 8vh;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ghost-title__text {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-weight: 300;
+  font-style: italic;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: lowercase;
+  animation: ghost-title-fade 8s ease-out forwards;
+  user-select: none;
+}
+
+@keyframes ghost-title-fade {
+  0% {
+    opacity: 0.5;
+    filter: blur(0px);
+  }
+
+  40% {
+    opacity: 0.25;
+    filter: blur(0.5px);
+  }
+
+  100% {
+    opacity: 0.06;
+    filter: blur(1.5px);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SPEECH FALLBACK & TRANSCRIPT DISPLAY
+   ══════════════════════════════════════════════════════════════════════ */
+
+/*
+ * Text-input fallback shown when the Web Speech API is not available
+ * (e.g., Firefox). Positioned at the bottom of the viewport, styled
+ * to match the dark theme while being clearly interactive.
+ */
+.speech-fallback-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 20;
+  width: min(90vw, 480px);
+}
+
+.speech-fallback-input {
+  flex: 1;
+  padding: 10px 14px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(20, 20, 20, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.speech-fallback-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.speech-fallback-input:focus {
+  border-color: rgba(100, 149, 237, 0.5);
+  box-shadow: 0 0 0 2px rgba(100, 149, 237, 0.1);
+}
+
+.speech-fallback-submit {
+  padding: 10px 16px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(100, 149, 237, 0.2);
+  border: 1px solid rgba(100, 149, 237, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.speech-fallback-submit:hover {
+  background: rgba(100, 149, 237, 0.3);
+  border-color: rgba(100, 149, 237, 0.5);
+  color: white;
+}
